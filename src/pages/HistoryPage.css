@@ -1,0 +1,115 @@
+.history-container {
+  max-width: 700px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+  padding: 32px 24px 24px 24px;
+}
+
+.history-container h2 {
+  color: #007bff;
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.history-filter-form {
+  display: flex;
+  gap: 16px;
+  align-items: flex-end;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.history-filter-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  color: #333;
+}
+
+.history-filter-form input[type='date'] {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  margin-top: 4px;
+}
+
+.history-filter-form button {
+  background: linear-gradient(135deg, #667eea 0%, #28a745 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 24px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.history-map-box {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  margin-bottom: 24px;
+}
+
+.history-details-box {
+  background: #f8f9fa;
+  border-radius: 10px;
+  padding: 16px;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.history-details-box h4 {
+  margin-top: 0;
+  color: #28a745;
+}
+
+.history-details-box ul {
+  padding-left: 18px;
+  margin: 0;
+}
+
+.history-details-box li {
+  margin-bottom: 6px;
+  font-size: 0.98rem;
+  color: #333;
+}
+
+.history-back-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-bottom: 12px;
+  padding: 0 0 0 2px;
+  transition: color 0.2s;
+}
+
+.history-back-btn:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+@media (max-width: 600px) {
+  .history-container {
+    padding: 16px 4px;
+  }
+  .history-map-box {
+    height: 250px !important;
+  }
+  .history-filter-form {
+    flex-direction: column;
+    gap: 8px;
+    align-items: stretch;
+  }
+} 
