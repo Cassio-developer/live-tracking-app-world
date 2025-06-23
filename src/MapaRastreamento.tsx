@@ -1,3 +1,4 @@
+import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Circle, Polyline } from 'react-leaflet';
 import { io, Socket } from 'socket.io-client';
 import L from 'leaflet';
@@ -5,13 +6,12 @@ import 'leaflet/dist/leaflet.css';
 import './ModalNome.css';
 import StatusUsuario from './StatusUsuario';
 import DrawerUsuarios from './DrawerUsuarios';
-import { useEffect, useRef, useState } from 'react';
-import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
+import { Icon } from 'leaflet';
+import { API_CONFIG } from './config/api';
 import { useAuth } from './contexts/AuthContext';
 import { authService } from './services/authService';
-import { useNavigate } from 'react-router-dom';
-
-
+import { z } from 'zod';
 
 interface Localizacao {
   lat: number;
@@ -21,60 +21,50 @@ interface Localizacao {
   nome: string;
 }
 
-
-
-
 const MapaRastreamento: React.FC = () => {
   const { logout, user, checkAuth } = useAuth();
   const navigate = useNavigate();
 
+  // URL do backend (Socket.io)
+  // Backend hospedado no Render
+  // const SOCKET_URL = 'https://back-end-localization.onrender.com';
+  const SOCKET_URL = API_CONFIG.SOCKET_URL;
+  const POSICAO_INICIAL: [number, number] = [-23.55052, -46.633308]; // São Paulo
+  const SENHA_ADMIN = 'admin123';
 
+  const tiposAvatar = [
+    { label: 'Carro', seedPrefix: 'car' },
+    { label: 'Moto', seedPrefix: 'motorcycle' },
+    { label: 'Caminhão', seedPrefix: 'truck' },
+    { label: 'Ônibus', seedPrefix: 'bus' },
+  ];
 
-// URL do backend (Socket.io)
-// Backend hospedado no Render
-// const SOCKET_URL = 'https://back-end-localization.onrender.com';
-const SOCKET_URL = 'http://localhost:4000/'
-const POSICAO_INICIAL: [number, number] = [-23.55052, -46.633308]; // São Paulo
-const SENHA_ADMIN = 'admin123';
+  function gerarAvatarUrl(seed: string, tipo: string) {
+    return `https://api.dicebear.com/7.x/icons/svg?seed=${tipo}-${seed}`;
+  }
 
-const tiposAvatar = [
-  { label: 'Carro', seedPrefix: 'car' },
-  { label: 'Moto', seedPrefix: 'motorcycle' },
-  { label: 'Caminhão', seedPrefix: 'truck' },
-  { label: 'Ônibus', seedPrefix: 'bus' },
-];
+  // Componente auxiliar para centralizar o mapa
+  function CentralizarMapa({ posicao }: { posicao: [number, number] }) {
+    const map = useMap();
+    useEffect(() => {
+      map.setView(posicao);
+    }, [posicao, map]);
+    return null;
+  }
 
-function gerarAvatarUrl(seed: string, tipo: string) {
-  return `https://api.dicebear.com/7.x/icons/svg?seed=${tipo}-${seed}`;
-}
-
-// Componente auxiliar para centralizar o mapa
-function CentralizarMapa({ posicao }: { posicao: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    map.setView(posicao);
-  }, [posicao, map]);
-  return null;
-}
-
-
-
-
-// Função utilitária para calcular distância entre duas coordenadas (em metros)
-function calcularDistancia([lat1, lng1]: [number, number], [lat2, lng2]: [number, number]) {
-  const R = 6371e3; // raio da Terra em metros
-  const toRad = (v: number) => (v * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLng = toRad(lng2 - lng1);
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-    Math.sin(dLng / 2) * Math.sin(dLng / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
-}
-
-
+  // Função utilitária para calcular distância entre duas coordenadas (em metros)
+  function calcularDistancia([lat1, lng1]: [number, number], [lat2, lng2]: [number, number]) {
+    const R = 6371e3; // raio da Terra em metros
+    const toRad = (v: number) => (v * Math.PI) / 180;
+    const dLat = toRad(lat2 - lat1);
+    const dLng = toRad(lng2 - lng1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
 
   const loginSchema = z.object({
     nome: z.string().min(1, 'Digite seu nome ou apelido'),
@@ -83,9 +73,6 @@ function calcularDistancia([lat1, lng1]: [number, number], [lat2, lng2]: [number
   
   const [erros, setErros] = useState<{ nome?: string; senhaAdmin?: string }>({});
   
-
-
-
   const [posicaoAtual, setPosicaoAtual] = useState<[number, number]>(POSICAO_INICIAL);
   const [localizacoes, setLocalizacoes] = useState<{ [key: string]: Localizacao }>({});
   const socketRef = useRef<Socket | null>(null);
