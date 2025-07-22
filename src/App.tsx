@@ -6,6 +6,7 @@ import AuthPage from './pages/AuthPage';
 import MapaRastreamento from './MapaRastreamento';
 import TestAPI from './components/TestAPI';
 import HistoryPage from './pages/HistoryPage';
+import InstallPWA from './components/InstallPWA';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 // import './ProtectedRoute.css';
 
@@ -28,6 +29,7 @@ function App() {
         </Routes>
         {/* Componente de teste - remover depois */}
         {/* <TestAPI /> */}
+        <InstallPWA />
       </AuthProvider>
     </Router>
   );
