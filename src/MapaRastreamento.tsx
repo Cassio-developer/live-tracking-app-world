@@ -76,6 +76,7 @@ const MapaRastreamento: React.FC = () => {
   const [posicaoAtual, setPosicaoAtual] = useState<[number, number]>(POSICAO_INICIAL);
   const [localizacoes, setLocalizacoes] = useState<{ [key: string]: Localizacao }>({});
   const socketRef = useRef<Socket | null>(null);
+  const [usuariosConectados, setUsuariosConectados] = useState<any[]>([]);
 
   // Estados para seleção de avatar no modal
   const [tipoAvatarSelecionado, setTipoAvatarSelecionado] = useState<string>(tiposAvatar[0].seedPrefix);
@@ -157,6 +158,20 @@ const MapaRastreamento: React.FC = () => {
     // Conectar com o servidor Socket.io
     socketRef.current = io(SOCKET_URL);
 
+    // Envie identificação ao conectar
+    if (user) {
+      socketRef.current.emit('identificacao', {
+        nome: user.nome,
+        avatar: user.avatar,
+        isAdmin: user.isAdmin
+      });
+    }
+
+    // Recebe lista de conectados (apenas admin)
+    socketRef.current.on('usuariosConectados', (usuarios) => {
+      setUsuariosConectados(usuarios);
+    });
+
     socketRef.current.on('connect', () => {
       console.log('Conectado ao servidor:', socketRef.current?.id);
     });
@@ -169,7 +184,7 @@ const MapaRastreamento: React.FC = () => {
     return () => {
       socketRef.current?.disconnect();
     };
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     if (showModal || !user) return;
@@ -236,7 +251,14 @@ const MapaRastreamento: React.FC = () => {
   }
 
   // Montar lista de usuários para o drawer
-  const usuariosDrawer = Object.entries(localizacoes).map(([userId, localizacao]) => {
+  const usuariosDrawer = isAdmin ? usuariosConectados.map(u => ({
+    id: u.socketId,
+    nome: u.nome,
+    avatar: u.avatar,
+    timestamp: Date.now(),
+    emMovimento: true, // Não temos status real, mas pode ser ajustado se necessário
+    tempoParadoSegundos: 0
+  })) : Object.entries(localizacoes).map(([userId, localizacao]) => {
     const emMovimento = Date.now() - localizacao.timestamp < 10000;
     const tempoParadoSegundos = Math.floor((Date.now() - localizacao.timestamp) / 1000);
     return {

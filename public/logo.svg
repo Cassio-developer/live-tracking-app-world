@@ -1,0 +1,17 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="240" fill="#007bff" stroke="#0056b3" stroke-width="8"/>
+  
+  <!-- GPS location pin -->
+  <path d="M256 80C200 80 154 126 154 182C154 238 256 320 256 320C256 320 358 238 358 182C358 126 312 80 256 80ZM256 200C238 200 224 186 224 168C224 150 238 136 256 136C274 136 288 150 288 168C288 186 274 200 256 200Z" fill="white"/>
+  
+  <!-- Signal waves -->
+  <circle cx="256" cy="256" r="180" fill="none" stroke="white" stroke-width="4" opacity="0.3"/>
+  <circle cx="256" cy="256" r="140" fill="none" stroke="white" stroke-width="3" opacity="0.5"/>
+  <circle cx="256" cy="256" r="100" fill="none" stroke="white" stroke-width="2" opacity="0.7"/>
+  
+  <!-- Small dots representing users -->
+  <circle cx="200" cy="200" r="8" fill="white"/>
+  <circle cx="312" cy="200" r="8" fill="white"/>
+  <circle cx="256" cy="320" r="8" fill="white"/>
+</svg> 
