@@ -35,11 +35,9 @@ const FaceSettings: React.FC<FaceSettingsProps> = ({
       setStatus(prev => ({ ...prev, isLoading: true }));
       
       const supported = isFaceRecognitionSupported();
-      console.log('📱 Suporte ao reconhecimento facial:', supported);
       
       if (supported) {
         const faceDataResponse = await faceAuthService.checkFaceData();
-        console.log('📊 Status dos dados faciais:', faceDataResponse);
         
         setStatus({
           hasFaceData: faceDataResponse.hasFaceData,
@@ -81,10 +79,8 @@ const FaceSettings: React.FC<FaceSettingsProps> = ({
       const response = await faceAuthService.removeFaceData();
       
       if (response.success) {
-        console.log('✅ Dados faciais removidos com sucesso');
         setStatus(prev => ({ ...prev, hasFaceData: false }));
       } else {
-        console.log('❌ Erro ao remover dados faciais:', response.message);
         setError(response.message);
       }
     } catch (error) {
@@ -102,14 +98,12 @@ const FaceSettings: React.FC<FaceSettingsProps> = ({
 
   // Callbacks para o registro
   const handleRegistrationSuccess = (message: string) => {
-    console.log('✅ Registro facial realizado:', message);
     setShowRegistration(false);
     setStatus(prev => ({ ...prev, hasFaceData: true }));
     setError(null);
   };
 
   const handleRegistrationError = (error: string) => {
-    console.log('❌ Erro no registro facial:', error);
     setError(error);
   };
 

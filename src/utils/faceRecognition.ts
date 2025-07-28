@@ -37,35 +37,27 @@ export interface FaceSetupResult {
  * @returns Promise<boolean> - true se carregado com sucesso
  */
 export const loadFaceModels = async (): Promise<boolean> => {
-  console.log('🔄 loadFaceModels chamada, faceapi disponível:', !!faceapi);
-  
   if (!faceapi) {
     console.error('❌ face-api.js não está disponível');
     return false;
   }
 
   try {
-    console.log('🔄 Carregando modelos de reconhecimento facial...');
-    
+
     await Promise.all([
       faceapi.loadTinyFaceDetectorModel('/models'),
       faceapi.loadFaceLandmarkModel('/models'),
       faceapi.loadFaceRecognitionModel('/models')
     ]);
-    
-    console.log('✅ Modelos carregados com sucesso');
-    
+
+
     // Verificar se os modelos foram carregados
-    const modelsLoaded = faceapi.nets.tinyFaceDetector.isLoaded && 
-                        faceapi.nets.faceLandmark68Net.isLoaded && 
-                        faceapi.nets.faceRecognitionNet.isLoaded;
-    
-    console.log('📊 Status dos modelos:', {
-      tinyFaceDetector: faceapi.nets.tinyFaceDetector.isLoaded,
-      faceLandmark68: faceapi.nets.faceLandmark68Net.isLoaded,
-      faceRecognition: faceapi.nets.faceRecognitionNet.isLoaded
-    });
-    
+    const modelsLoaded = faceapi.nets.tinyFaceDetector.isLoaded &&
+      faceapi.nets.faceLandmark68Net.isLoaded &&
+      faceapi.nets.faceRecognitionNet.isLoaded;
+
+
+
     return modelsLoaded;
   } catch (error) {
     console.error('❌ Erro ao carregar modelos:', error);
@@ -93,30 +85,20 @@ export const startVideoStream = async (
   try {
     const stream = await navigator.mediaDevices.getUserMedia(options);
     videoElement.srcObject = stream;
-    
+
     // Aguardar o vídeo estar pronto
     await new Promise<void>((resolve) => {
       videoElement.onloadedmetadata = () => {
-        console.log('📹 Metadados do vídeo carregados:', {
-          width: videoElement.videoWidth,
-          height: videoElement.videoHeight
-        });
+
         resolve();
       };
     });
-    
+
     await videoElement.play();
-    
+
     // Aguardar um pouco mais para garantir que o vídeo está reproduzindo
     await new Promise(resolve => setTimeout(resolve, 500));
-    
-    console.log('✅ Stream de vídeo iniciado - Status:', {
-      readyState: videoElement.readyState,
-      paused: videoElement.paused,
-      ended: videoElement.ended,
-      currentTime: videoElement.currentTime
-    });
-    
+
     return stream;
   } catch (error) {
     console.error('❌ Erro ao iniciar stream de vídeo:', error);
@@ -130,10 +112,8 @@ export const startVideoStream = async (
  * @returns Promise<FaceDetectionResult>
  */
 export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDetectionResult> => {
-  console.log('🔍 detectFace chamada, faceapi disponível:', !!faceapi);
-  
+
   if (!faceapi) {
-    console.log('❌ face-api.js não está disponível');
     return {
       success: false,
       error: 'face-api.js não está disponível'
@@ -141,7 +121,6 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
   }
 
   if (!videoElement) {
-    console.log('❌ Elemento de vídeo é null');
     return {
       success: false,
       error: 'Elemento de vídeo é null'
@@ -150,26 +129,16 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
 
   try {
     if (!videoElement.videoWidth || !videoElement.videoHeight) {
-      console.log('❌ Vídeo não está pronto:', { width: videoElement.videoWidth, height: videoElement.videoHeight });
       return {
         success: false,
         error: 'Vídeo não está pronto'
       };
     }
 
-    console.log('🔍 Tentando detectar face...', { 
-      width: videoElement.videoWidth, 
-      height: videoElement.videoHeight,
-      readyState: videoElement.readyState,
-      paused: videoElement.paused,
-      ended: videoElement.ended,
-      currentTime: videoElement.currentTime,
-      duration: videoElement.duration
-    });
+
 
     // Verificar se o vídeo está realmente reproduzindo
     if (videoElement.paused || videoElement.ended || videoElement.readyState < 2) {
-      console.log('❌ Vídeo não está reproduzindo corretamente');
       return {
         success: false,
         error: 'Vídeo não está reproduzindo'
@@ -179,7 +148,6 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
     // Aguardar um pouco para garantir que o vídeo está estável
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    console.log('🔍 Iniciando detecção com TinyFaceDetector...');
     const detection = await faceapi.detectSingleFace(
       videoElement,
       new faceapi.TinyFaceDetectorOptions({
@@ -188,18 +156,15 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
       })
     ).withFaceLandmarks().withFaceDescriptor();
 
-    console.log('🔍 Resultado da detecção:', detection ? 'Face encontrada' : 'Nenhuma face');
 
     if (detection) {
-      console.log('✅ Face detectada com sucesso!');
       return {
         success: true,
         descriptor: detection.descriptor,
         landmarks: detection.landmarks
       };
     } else {
-      console.log('❌ Nenhuma face detectada com TinyFaceDetector, tentando configuração mais sensível...');
-      
+
       // Tentar com configuração ainda mais sensível
       try {
         const sensitiveDetection = await faceapi.detectSingleFace(
@@ -209,9 +174,8 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
             scoreThreshold: 0.001 // Extremamente baixo
           })
         ).withFaceLandmarks().withFaceDescriptor();
-        
+
         if (sensitiveDetection) {
-          console.log('✅ Face detectada com configuração sensível!');
           return {
             success: true,
             descriptor: sensitiveDetection.descriptor,
@@ -219,17 +183,14 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
           };
         }
       } catch (sensitiveError) {
-        console.log('❌ Configuração sensível também falhou:', sensitiveError);
       }
-      
-      console.log('❌ Nenhuma face detectada com nenhuma configuração');
+
       return {
         success: false,
         error: 'Nenhuma face detectada'
       };
     }
   } catch (error) {
-    console.error('❌ Erro na detecção facial:', error);
     return {
       success: false,
       error: 'Erro na detecção facial'
@@ -291,16 +252,16 @@ export const captureFaceSamples = async (
 ): Promise<FaceSetupResult> => {
   try {
     const descriptors: Float32Array[] = [];
-    
+
     console.log(`🔄 Capturando ${sampleCount} amostras faciais...`);
-    
+
     for (let i = 0; i < sampleCount; i++) {
       const detection = await detectFace(videoElement);
-      
+
       if (detection.success && detection.descriptor) {
         descriptors.push(detection.descriptor);
         console.log(`✅ Amostra ${i + 1}/${sampleCount} capturada`);
-        
+
         if (i < sampleCount - 1) {
           await new Promise(resolve => setTimeout(resolve, intervalMs));
         }
@@ -308,7 +269,7 @@ export const captureFaceSamples = async (
         console.warn(`⚠️ Falha na captura da amostra ${i + 1}`);
       }
     }
-    
+
     if (descriptors.length >= Math.ceil(sampleCount * 0.8)) {
       return {
         success: true,

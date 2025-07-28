@@ -26,7 +26,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(user);
       }
     } catch (error) {
-      console.log('Usuário não está logado');
+      // Usuário não está logado
     } finally {
       setIsLoading(false);
     }

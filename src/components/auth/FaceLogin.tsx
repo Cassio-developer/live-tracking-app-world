@@ -63,49 +63,39 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
 
   // Função para inicializar câmera
   const initializeCamera = useCallback(async () => {
-    console.log('🎥 initializeCamera chamada');
     try {
       setIsLoading(true);
       
       // Primeiro carregar os modelos
-      console.log('🔄 Carregando modelos de reconhecimento facial...');
       const modelsLoaded = await loadFaceModels();
       
       if (!modelsLoaded) {
-        console.log('❌ Falha ao carregar modelos');
         setError('Erro ao carregar modelos de reconhecimento facial');
         setIsLoading(false);
         return;
       }
       
-      console.log('✅ Modelos carregados, inicializando câmera...');
-      
       // Depois inicializar a câmera
       if (videoRef.current) {
-        console.log('🎥 Iniciando stream de vídeo...');
         const stream = await startVideoStream(videoRef.current);
         streamRef.current = stream;
         
         if (stream) {
-          console.log('✅ Stream iniciado, iniciando detecção facial...');
           setIsLoading(false);
           // Aguardar um pouco antes de iniciar detecção
           setTimeout(() => {
-            console.log('🔍 Iniciando detecção após delay...');
             startFaceDetection();
           }, 1000);
         } else {
-          console.log('❌ Falha ao iniciar stream');
           setError('Não foi possível acessar a câmera');
           setIsLoading(false);
         }
       } else {
-        console.log('❌ Elemento de vídeo não encontrado');
         setError('Elemento de vídeo não encontrado');
         setIsLoading(false);
       }
     } catch (error) {
-      console.error('❌ Erro ao inicializar câmera:', error);
+      console.error('Erro ao inicializar câmera:', error);
       setError('Erro ao acessar câmera. Verifique as permissões.');
       setIsLoading(false);
     }
@@ -113,25 +103,15 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
 
   // Aguardar elemento de vídeo estar disponível
   useEffect(() => {
-    console.log('🔍 useEffect - Verificando condições para inicializar câmera:', {
-      isSupported,
-      hasFaceData,
-      checkingFaceData,
-      streamExists: !!streamRef.current
-    });
-    
     if (!isSupported || !hasFaceData || checkingFaceData) {
-      console.log('❌ Condições não atendidas para inicializar câmera');
       return;
     }
 
     // Verificar se já foi inicializado
     if (streamRef.current) {
-      console.log('✅ Câmera já foi inicializada');
       return;
     }
 
-    console.log('✅ Iniciando processo de inicialização da câmera...');
     let attempts = 0;
     const maxAttempts = 50; // 5 segundos máximo
 
@@ -139,13 +119,10 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
       attempts++;
       
       if (videoRef.current) {
-        console.log('✅ Elemento de vídeo encontrado, inicializando câmera...');
         initializeCamera();
       } else if (attempts < maxAttempts) {
-        console.log(`⏳ Aguardando elemento de vídeo... (${attempts}/${maxAttempts})`);
         setTimeout(waitForVideoElement, 100);
       } else {
-        console.log('❌ Timeout: Elemento de vídeo não encontrado após 5 segundos');
         setError('Erro ao inicializar câmera. Tente recarregar a página.');
         setIsLoading(false);
       }
@@ -155,7 +132,6 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
 
     // Cleanup
     return () => {
-      console.log('🧹 Cleanup do useEffect - parando stream e detecção');
       setIsDetecting(false);
       loginAttemptedRef.current = true;
       setLoginAttempted(true);
@@ -168,11 +144,8 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
 
   // Login com face detectada
   const handleFaceLogin = useCallback(async (descriptor: Float32Array) => {
-    console.log('🔐 handleFaceLogin chamada - loginAttempted:', loginAttempted, 'ref:', loginAttemptedRef.current);
-    
     // Verificar se já está tentando login
     if (loginAttemptedRef.current) {
-      console.log('🛑 Login já foi tentado, ignorando nova tentativa');
       return;
     }
     
@@ -181,16 +154,12 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
     setLoginAttempted(true);
 
     try {
-      console.log('🔐 Iniciando processo de login facial...');
       setIsDetecting(false);
       setIsLoading(true);
-      
-      console.log('🔐 Tentando login com reconhecimento facial...');
       
       const response: FaceLoginResponse = await faceAuthService.loginWithFace(descriptor);
       
       if (response.success && response.user) {
-        console.log('✅ Login facial realizado com sucesso');
         // Parar completamente a detecção e stream
         setIsDetecting(false);
         setLoginAttempted(true);
@@ -199,17 +168,12 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
           stopVideoStream(streamRef.current);
           streamRef.current = null;
         }
-        console.log('🛑 Parando completamente após login bem-sucedido');
         
         // Atualizar o contexto de autenticação diretamente
-        console.log('✅ Atualizando contexto de autenticação com usuário:', response.user);
         setUserDirectly(response.user);
-        console.log('✅ Contexto de autenticação atualizado com sucesso');
         
         return; // Sair da função imediatamente
       } else {
-        console.log('❌ Login facial falhou:', response.message);
-        
         // Verificar se é erro de dados não encontrados
         if (response.message.includes('Nenhum usuário com dados faciais encontrado') || 
             response.message.includes('Face não reconhecida')) {
@@ -223,7 +187,7 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
         // NÃO retomar detecção automaticamente - deixar o usuário tentar novamente
       }
     } catch (error: any) {
-      console.error('❌ Erro no login facial:', error);
+      console.error('Erro no login facial:', error);
       
       // Verificar se é erro de rede ou servidor
       if (error.message && error.message.includes('Token não fornecido')) {
@@ -240,17 +204,10 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
 
   // Detecção contínua de face
   const startFaceDetection = useCallback(() => {
-    console.log('🔍 startFaceDetection chamada - isDetecting:', isDetecting, 'loginAttempted:', loginAttempted);
-    
-
-    
     if (!videoRef.current || !canvasRef.current) {
-      console.log('❌ Elementos de vídeo ou canvas não encontrados');
       return;
     }
 
-    console.log('✅ Iniciando detecção facial...');
-    
     // Resetar estado de login
     loginAttemptedRef.current = false;
     setLoginAttempted(false);
@@ -262,67 +219,41 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
     
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
-    console.log('📐 Canvas configurado:', { width: canvas.width, height: canvas.height });
 
     // Configurar estado de detecção
     setIsDetecting(true);
     
     const detectLoop = async () => {
-      console.log('🔄 Loop de detecção iniciado - loginAttempted:', loginAttempted);
-      
       // Verificar se os elementos ainda existem
       if (!videoRef.current || !canvasRef.current) {
-        console.log('❌ Elementos de vídeo ou canvas não encontrados no loop');
         setIsDetecting(false);
         return;
       }
 
       // Parar imediatamente se já tentou fazer login
       if (loginAttemptedRef.current) {
-        console.log('🛑 Parando detecção - login já tentado');
         setIsDetecting(false);
         return;
       }
       
       // Verificar se o contador já chegou a 3 para evitar continuar desnecessariamente
       if (detectionCount >= 3) {
-        console.log('🛑 Parando detecção - contador já chegou a 3');
         setIsDetecting(false);
         return;
       }
 
       try {
-        debugger;
-        console.log('🔍 Chamando detectFace...');
         const detection: FaceDetectionResult = await detectFace(videoRef.current);
-        console.log('🔍 Resultado da detecção:', detection.success ? 'Sucesso' : 'Falha', detection.error || '');
-        console.log('🔍 Detalhes da detecção:', {
-          success: detection.success,
-          hasLandmarks: !!detection.landmarks,
-          hasDescriptor: !!detection.descriptor,
-          error: detection.error
-        });
         
         if (detection.success && detection.landmarks) {
           setFaceDetected(true);
           setError(null);
           
-          // Desenhar landmarks (temporariamente desabilitado)
-          // const displaySize = {
-          //   width: videoRef.current.videoWidth,
-          //   height: videoRef.current.videoHeight
-          // };
-          // 
-          // drawFaceLandmarks(canvasRef.current, detection, displaySize);
-          
           // Tentar login após 3 detecções consecutivas
           setDetectionCount(prev => {
             const newCount = prev + 1;
-            console.log('🔍 Contador de detecção:', newCount, '/ 3');
             
             if (newCount >= 3 && detection.descriptor && !loginAttemptedRef.current) {
-              console.log('🔐 Tentando login após 3 detecções consecutivas');
               // Chamar login imediatamente
               if (detection.descriptor) {
                 handleFaceLogin(detection.descriptor);
@@ -341,35 +272,28 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
           }
         }
       } catch (error) {
-        console.error('❌ Erro na detecção:', error);
+        console.error('Erro na detecção:', error);
         // Parar detecção em caso de erro
         setIsDetecting(false);
         return;
       }
 
       // Continuar loop apenas se não tentou login
-      console.log('🔍 Verificando se deve continuar loop - loginAttempted:', loginAttempted, 'ref:', loginAttemptedRef.current);
-      
       // Verificação rigorosa antes de continuar
       if (loginAttemptedRef.current) {
-        console.log('🛑 Parando loop - login já tentado');
         setIsDetecting(false);
         return;
       }
       
-      console.log('✅ Continuando loop de detecção');
       // Verificar novamente antes de agendar próxima iteração
       if (!loginAttemptedRef.current) {
         setTimeout(detectLoop, 100); // Usar setTimeout em vez de requestAnimationFrame
       } else {
-        console.log('🛑 Cancelando próxima iteração - login já tentado');
         setIsDetecting(false);
       }
     };
 
-    console.log('🔄 Configurando estado de detecção...');
     setIsDetecting(true);
-    console.log('🚀 Iniciando loop de detecção...');
     // Aguardar um pouco para o estado ser atualizado
     setTimeout(() => {
       detectLoop();
@@ -378,7 +302,6 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
 
   // Parar detecção
   const stopFaceDetection = useCallback(() => {
-    console.log('🛑 stopFaceDetection chamada');
     setIsDetecting(false);
     loginAttemptedRef.current = true;
     setLoginAttempted(true);
@@ -389,7 +312,6 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
   // Cleanup quando componente é desmontado
   useEffect(() => {
     return () => {
-      console.log('🧹 Cleanup do componente FaceLogin');
       setIsDetecting(false);
       loginAttemptedRef.current = true;
       setLoginAttempted(true);

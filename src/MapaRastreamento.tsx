@@ -112,7 +112,6 @@ const MapaRastreamento: React.FC = () => {
   useEffect(() => {
     if (user) {
       setIsAdmin(user.isAdmin || false);
-      console.log('👤 Status de admin atualizado:', user.isAdmin);
     }
   }, [user]);
 
@@ -171,7 +170,6 @@ const MapaRastreamento: React.FC = () => {
 
     // Envie identificação ao conectar
     if (user) {
-      console.log('🔌 Enviando identificação:', { nome: user.nome, isAdmin: user.isAdmin });
       socketRef.current.emit('identificacao', {
         nome: user.nome,
         avatar: user.avatar,
@@ -181,13 +179,11 @@ const MapaRastreamento: React.FC = () => {
 
     // Recebe lista de conectados (apenas admin)
     socketRef.current.on('usuariosConectados', (usuarios) => {
-      console.log('📋 Recebida lista de usuários conectados:', usuarios.length, 'usuários');
-      console.log('👥 Usuários:', usuarios.map((u: any) => ({ nome: u.nome, isAdmin: u.isAdmin })));
       setUsuariosConectados(usuarios);
     });
 
     socketRef.current.on('connect', () => {
-      console.log('🔌 Conectado ao servidor:', socketRef.current?.id);
+      // Conectado ao servidor
     });
 
     // Receber localizações de todos os usuários
@@ -217,15 +213,6 @@ const MapaRastreamento: React.FC = () => {
           setAccuracy(position.coords.accuracy);
           
           // Log detalhado da precisão
-          console.log('📍 Nova localização:', {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-            altitude: position.coords.altitude,
-            heading: position.coords.heading,
-            speed: position.coords.speed,
-            timestamp: position.timestamp
-          });
 
           setRota(prev => {
             // Só adiciona se mudou de posição significativamente (mais de 1 metro)
@@ -274,15 +261,13 @@ const MapaRastreamento: React.FC = () => {
           
           // Tentar obter localização com configurações menos restritivas
           if (error.code === error.TIMEOUT) {
-            console.log('⏰ Timeout - Tentando com configurações menos restritivas...');
             navigator.geolocation.getCurrentPosition(
               (position) => {
-                console.log('✅ Localização obtida com configurações alternativas');
                 setPosicaoAtual([position.coords.latitude, position.coords.longitude]);
                 setAccuracy(position.coords.accuracy);
               },
               (fallbackError) => {
-                console.error('❌ Falha também com configurações alternativas:', fallbackError);
+                console.error('Falha também com configurações alternativas:', fallbackError);
               },
               { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
             );
@@ -330,7 +315,6 @@ const MapaRastreamento: React.FC = () => {
 
   function handleRemoverUsuario(userId: string) {
     // Implemente a lógica para remover um usuário do drawer
-    console.log(`Removendo usuário: ${userId}`);
   }
 
   return (

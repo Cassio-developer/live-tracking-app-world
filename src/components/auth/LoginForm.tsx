@@ -24,7 +24,6 @@ const LoginForm: React.FC = () => {
   useEffect(() => {
     const checkFaceSupport = () => {
       const supported = isFaceRecognitionSupported();
-      console.log('🔍 Suporte a reconhecimento facial:', supported);
       setIsFaceSupported(supported);
       
       // Por enquanto, não verificamos dados faciais na tela de login
@@ -70,7 +69,6 @@ const LoginForm: React.FC = () => {
 
   const handleFaceLoginSuccess = (user: any) => {
     // Atualizar o contexto de autenticação com o usuário logado
-    console.log('✅ Login facial realizado com sucesso');
     // O contexto será atualizado automaticamente pelo FaceLogin
     // Não precisamos fazer nada aqui, pois o AuthContext já foi atualizado
   };
@@ -84,13 +82,7 @@ const LoginForm: React.FC = () => {
     setShowFaceLogin(false);
   };
 
-  // Logs para debug
-  console.log('🔍 Estados do login:', {
-    isFaceSupported,
-    hasFaceData,
-    showFaceLogin,
-    shouldShowFaceOption: isFaceSupported && hasFaceData
-  });
+  // Estados do login para debug
 
   // Se mostrar login facial, renderizar componente FaceLogin
   if (showFaceLogin) {

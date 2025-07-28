@@ -12,7 +12,6 @@ const TestAPI: React.FC = () => {
     try {
       const response = await authService.testGetUsers();
       setUsers(response.users);
-      console.log('Usuários encontrados:', response);
     } catch (err: any) {
       setError(err.message || 'Erro ao buscar usuários');
       console.error('Erro:', err);

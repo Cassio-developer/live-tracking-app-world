@@ -39,9 +39,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
   const [isSupported, setIsSupported] = useState(false);
   const [step, setStep] = useState<'setup' | 'capturing' | 'processing'>('setup');
 
-  console.log('isLoading', isLoading)
-  console.log('isDetecting', isDetecting)
-  console.log('faceDetected', faceDetected)
+
 
   // Função para inicializar câmera
   const initializeCamera = useCallback(async () => {
@@ -49,7 +47,6 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
       setIsLoading(true);
       
       // Primeiro carregar os modelos
-      console.log('🔄 Carregando modelos de reconhecimento facial...');
       const modelsLoaded = await loadFaceModels();
       
       if (!modelsLoaded) {
@@ -58,25 +55,19 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
         return;
       }
       
-      console.log('✅ Modelos carregados, inicializando câmera...');
-      
       // Depois inicializar a câmera
       if (videoRef.current) {
-        console.log('🎥 Iniciando stream de vídeo...');
         const stream = await startVideoStream(videoRef.current);
         streamRef.current = stream;
         
         if (stream) {
-          console.log('✅ Stream iniciado, iniciando detecção facial...');
           setIsLoading(false);
           startFaceDetection();
         } else {
-          console.log('❌ Falha ao iniciar stream');
           setError('Não foi possível acessar a câmera');
           setIsLoading(false);
         }
       } else {
-        console.log('❌ Elemento de vídeo não encontrado');
         setError('Elemento de vídeo não encontrado');
         setIsLoading(false);
       }
@@ -108,13 +99,10 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
       attempts++;
       
       if (videoRef.current) {
-        console.log('✅ Elemento de vídeo encontrado, inicializando câmera...');
         initializeCamera();
       } else if (attempts < maxAttempts) {
-        console.log(`⏳ Aguardando elemento de vídeo... (${attempts}/${maxAttempts})`);
         setTimeout(waitForVideoElement, 100);
       } else {
-        console.log('❌ Timeout: Elemento de vídeo não encontrado após 5 segundos');
         setError('Erro ao inicializar câmera. Tente recarregar a página.');
         setIsLoading(false);
       }
@@ -132,9 +120,7 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
 
   // Detecção contínua de face
   const startFaceDetection = useCallback(() => {
-    console.log('🔍 Iniciando detecção facial...');
     if (!videoRef.current || !canvasRef.current) {
-      console.log('❌ Elementos de vídeo ou canvas não encontrados');
       return;
     }
 
@@ -159,7 +145,6 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
         const detection: FaceDetectionResult = await detectFace(videoRef.current);
         
         if (detection.success && detection.landmarks) {
-          console.log('✅ Face detectada!');
           setFaceDetected(true);
           setError(null);
           
@@ -213,26 +198,20 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
       setStep('capturing');
       setError(null);
       
-      console.log('🔄 Iniciando captura de amostras faciais...');
-      
       const result = await captureFaceSamples(videoRef.current, totalSamples, 1500);
       
       if (result.success) {
         setStep('processing');
-        console.log(`✅ ${result.descriptors.length} amostras capturadas com sucesso`);
         
         // Registrar no backend
         const response: FaceRegistrationResponse = await faceAuthService.registerFace(result.descriptors);
         
         if (response.success) {
-          console.log('✅ Registro facial realizado com sucesso');
           onRegistrationSuccess(response.message);
         } else {
-          console.log('❌ Erro no registro facial:', response.message);
           onRegistrationError(response.message);
         }
       } else {
-        console.log('❌ Falha na captura de amostras:', result.error);
         setError(result.error || 'Falha na captura de amostras');
         setStep('setup');
       }
