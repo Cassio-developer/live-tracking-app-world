@@ -205,6 +205,13 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
   // Detecção contínua de face
   const startFaceDetection = useCallback(() => {
     if (!videoRef.current || !canvasRef.current) {
+      console.warn('Elementos de vídeo ou canvas não encontrados');
+      return;
+    }
+
+    // Verificar se os elementos estão realmente prontos
+    if (!videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+      console.warn('Vídeo não está pronto para detecção');
       return;
     }
 
@@ -213,19 +220,32 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
     setLoginAttempted(false);
     setDetectionCount(0);
     
-    // Configurar canvas
+    // Configurar canvas com verificação de segurança
     const canvas = canvasRef.current;
     const video = videoRef.current;
     
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    if (canvas && video && video.videoWidth && video.videoHeight) {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    } else {
+      console.warn('Não foi possível configurar o canvas - elementos não prontos');
+      return;
+    }
 
     // Configurar estado de detecção
     setIsDetecting(true);
     
     const detectLoop = async () => {
-      // Verificar se os elementos ainda existem
+      // Verificar se os elementos ainda existem e estão prontos
       if (!videoRef.current || !canvasRef.current) {
+        console.warn('Elementos de vídeo ou canvas não encontrados no loop');
+        setIsDetecting(false);
+        return;
+      }
+
+      // Verificar se o vídeo está pronto
+      if (!videoRef.current.videoWidth || !videoRef.current.videoHeight) {
+        console.warn('Vídeo não está pronto no loop');
         setIsDetecting(false);
         return;
       }
@@ -246,29 +266,53 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
         const detection: FaceDetectionResult = await detectFace(videoRef.current);
         
         if (detection.success && detection.landmarks) {
-          setFaceDetected(true);
-          setError(null);
+          // Validação rigorosa da qualidade da face
+          const landmarks = detection.landmarks;
           
-          // Tentar login após 3 detecções consecutivas
-          setDetectionCount(prev => {
-            const newCount = prev + 1;
+          // Calcular dimensões da face
+          const leftEye = landmarks.getLeftEye();
+          const rightEye = landmarks.getRightEye();
+          const mouth = landmarks.getMouth();
+          
+          const faceWidth = Math.abs(leftEye[0].x - rightEye[0].x);
+          const faceHeight = Math.abs(leftEye[0].y - mouth[0].y);
+          
+          // Calcular proporção olhos-boca (deve ser próxima de 1.6 para face humana)
+          const eyeToMouthRatio = faceHeight / faceWidth;
+          
+          // Verificar se a face tem proporções humanas e tamanho adequado
+          if (faceWidth > 60 && faceHeight > 60 && 
+              faceWidth < 500 && faceHeight < 500 &&
+              eyeToMouthRatio > 1.0 && eyeToMouthRatio < 2.5) {
+            setFaceDetected(true);
+            setError(null);
             
-            if (newCount >= 3 && detection.descriptor && !loginAttemptedRef.current) {
-              // Chamar login imediatamente
-              if (detection.descriptor) {
-                handleFaceLogin(detection.descriptor);
+            // Tentar login após 3 detecções consecutivas
+            setDetectionCount(prev => {
+              const newCount = prev + 1;
+              
+              if (newCount >= 4 && detection.descriptor && !loginAttemptedRef.current) {
+                // Chamar login imediatamente
+                if (detection.descriptor) {
+                  handleFaceLogin(detection.descriptor);
+                }
               }
-            }
-            return newCount;
-          });
+              return newCount;
+            });
+          } else {
+            setFaceDetected(false);
+            setDetectionCount(0);
+          }
         } else {
           setFaceDetected(false);
           setDetectionCount(0);
           
-          // Limpar canvas
-          const ctx = canvasRef.current.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          // Limpar canvas com verificação de segurança
+          if (canvasRef.current && canvasRef.current.width && canvasRef.current.height) {
+            const ctx = canvasRef.current.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+            }
           }
         }
       } catch (error) {
@@ -400,7 +444,7 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
                 <span>Face detectada</span>
                 {detectionCount > 0 && (
                   <span className="detection-count">
-                    ({detectionCount}/3)
+                    ({detectionCount}/4)
                   </span>
                 )}
               </div>

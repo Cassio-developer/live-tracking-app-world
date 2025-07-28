@@ -152,7 +152,7 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
       videoElement,
       new faceapi.TinyFaceDetectorOptions({
         inputSize: 512, // Aumentado para melhor detecção
-        scoreThreshold: 0.01 // Extremamente baixo para detectar qualquer coisa
+        scoreThreshold: 0.4 // Equilibrado para evitar falsos positivos
       })
     ).withFaceLandmarks().withFaceDescriptor();
 
@@ -171,7 +171,7 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
           videoElement,
           new faceapi.TinyFaceDetectorOptions({
             inputSize: 224,
-            scoreThreshold: 0.001 // Extremamente baixo
+            scoreThreshold: 0.3 // Equilibrado
           })
         ).withFaceLandmarks().withFaceDescriptor();
 
@@ -208,7 +208,7 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
 export const compareFaces = (
   descriptor1: Float32Array,
   descriptor2: Float32Array,
-  threshold: number = 0.6
+  threshold: number = 0.5
 ): FaceComparisonResult => {
   if (!faceapi) {
     return {
