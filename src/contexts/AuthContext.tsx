@@ -62,6 +62,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const setUserDirectly = (userData: User) => {
+    setUser(userData);
+  };
+
   const value: AuthContextType = {
     user,
     isAuthenticated,
@@ -70,6 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     checkAuth,
+    setUserDirectly,
   };
 
   return (

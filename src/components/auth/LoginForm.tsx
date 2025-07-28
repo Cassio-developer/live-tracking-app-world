@@ -20,20 +20,16 @@ const LoginForm: React.FC = () => {
   const [isFaceSupported, setIsFaceSupported] = useState(false);
   const { login } = useAuth();
 
-  // Verificar suporte e dados faciais
+  // Verificar suporte a reconhecimento facial
   useEffect(() => {
-    const checkFaceSupport = async () => {
+    const checkFaceSupport = () => {
       const supported = isFaceRecognitionSupported();
+      console.log('🔍 Suporte a reconhecimento facial:', supported);
       setIsFaceSupported(supported);
       
-      if (supported) {
-        try {
-          const response = await faceAuthService.checkFaceData();
-          setHasFaceData(response.success && response.hasFaceData);
-        } catch (error) {
-          console.warn('Erro ao verificar dados faciais:', error);
-        }
-      }
+      // Por enquanto, não verificamos dados faciais na tela de login
+      // pois o usuário pode não estar logado ainda
+      setHasFaceData(false);
     };
 
     checkFaceSupport();
@@ -73,8 +69,10 @@ const LoginForm: React.FC = () => {
   };
 
   const handleFaceLoginSuccess = (user: any) => {
-    // O contexto de autenticação será atualizado automaticamente
+    // Atualizar o contexto de autenticação com o usuário logado
     console.log('✅ Login facial realizado com sucesso');
+    // O contexto será atualizado automaticamente pelo FaceLogin
+    // Não precisamos fazer nada aqui, pois o AuthContext já foi atualizado
   };
 
   const handleFaceLoginError = (error: string) => {
@@ -86,11 +84,18 @@ const LoginForm: React.FC = () => {
     setShowFaceLogin(false);
   };
 
+  // Logs para debug
+  console.log('🔍 Estados do login:', {
+    isFaceSupported,
+    hasFaceData,
+    showFaceLogin,
+    shouldShowFaceOption: isFaceSupported && hasFaceData
+  });
+
   // Se mostrar login facial, renderizar componente FaceLogin
   if (showFaceLogin) {
     return (
       <FaceLogin
-        onLoginSuccess={handleFaceLoginSuccess}
         onLoginError={handleFaceLoginError}
         onCancel={handleFaceLoginCancel}
         className="auth-form-content"
@@ -100,54 +105,67 @@ const LoginForm: React.FC = () => {
 
   return (
     <div className="auth-form-content">
-      {/* Opção de login facial */}
-      {isFaceSupported && hasFaceData && (
-        <div className="face-login-option">
-          <button
-            type="button"
-            onClick={() => setShowFaceLogin(true)}
-            className="face-login-button"
-          >
-            <span className="face-icon">👤</span>
-            <span>Entrar com Reconhecimento Facial</span>
-          </button>
-          
-          <div className="divider">
-            <span>ou</span>
+      <div className="login-options">
+        {/* Opção de login facial */}
+        {isFaceSupported && (
+          <div className="login-option face-option">
+            <button
+              type="button"
+              onClick={() => setShowFaceLogin(true)}
+              className="login-option-button face-login-button"
+            >
+              <div className="option-icon">👤</div>
+              <div className="option-content">
+                <h3>Reconhecimento Facial</h3>
+                <p>Login rápido e seguro com seu rosto</p>
+              </div>
+              <div className="option-arrow">→</div>
+            </button>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Formulário de login tradicional */}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <input
-            type="text"
-            name="nome"
-            placeholder="Nome de usuário"
-            value={formData.nome}
-            onChange={handleChange}
-            className={errors.nome ? 'error' : ''}
-          />
-          {errors.nome && <span className="error-message">{errors.nome}</span>}
-        </div>
+        {/* Opção de login tradicional */}
+        <div className="login-option password-option">
+          <div className="login-option-button password-login-button">
+            <div className="option-icon">🔑</div>
+            <div className="option-content">
+              <h3>Login com Senha</h3>
+              <p>Use seu nome de usuário e senha</p>
+            </div>
+          </div>
+          
+          {/* Formulário de login tradicional */}
+          <form onSubmit={handleSubmit} className="password-form">
+            <div className="form-group">
+              <input
+                type="text"
+                name="nome"
+                placeholder="Nome de usuário"
+                value={formData.nome}
+                onChange={handleChange}
+                className={errors.nome ? 'error' : ''}
+              />
+              {errors.nome && <span className="error-message">{errors.nome}</span>}
+            </div>
 
-        <div className="form-group">
-          <input
-            type="password"
-            name="senha"
-            placeholder="Senha"
-            value={formData.senha}
-            onChange={handleChange}
-            className={errors.senha ? 'error' : ''}
-          />
-          {errors.senha && <span className="error-message">{errors.senha}</span>}
-        </div>
+            <div className="form-group">
+              <input
+                type="password"
+                name="senha"
+                placeholder="Senha"
+                value={formData.senha}
+                onChange={handleChange}
+                className={errors.senha ? 'error' : ''}
+              />
+              {errors.senha && <span className="error-message">{errors.senha}</span>}
+            </div>
 
-        <button type="submit" disabled={isLoading} className="auth-button">
-          {isLoading ? 'Entrando...' : 'Entrar'}
-        </button>
-      </form>
+            <button type="submit" disabled={isLoading} className="auth-button">
+              {isLoading ? 'Entrando...' : 'Entrar com Senha'}
+            </button>
+          </form>
+        </div>
+      </div>
 
       {/* Informações sobre reconhecimento facial */}
       {isFaceSupported && !hasFaceData && (

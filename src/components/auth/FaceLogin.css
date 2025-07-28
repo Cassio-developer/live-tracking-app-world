@@ -235,4 +235,27 @@
     font-size: 0.8rem;
     padding: 0.4rem 0.8rem;
   }
+}
+
+/* Estilos para tela de loading */
+.face-login-loading {
+  text-align: center;
+  padding: 2rem;
+}
+
+.face-login-loading .loading-spinner {
+  margin: 0 auto 1rem auto;
+}
+
+.face-login-loading h3 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 0.5rem 0;
+}
+
+.face-login-loading p {
+  color: #666;
+  margin: 0;
+  font-size: 0.9rem;
 } 

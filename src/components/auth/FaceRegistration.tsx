@@ -148,8 +148,15 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
     console.log('📐 Canvas configurado:', { width: canvas.width, height: canvas.height });
 
     const detectLoop = async () => {
+      // Verificar se os elementos ainda existem
+      if (!videoRef.current || !canvasRef.current) {
+        console.log('❌ Elementos de vídeo ou canvas não encontrados no loop');
+        setIsDetecting(false);
+        return;
+      }
+
       try {
-        const detection: FaceDetectionResult = await detectFace(videoRef.current!);
+        const detection: FaceDetectionResult = await detectFace(videoRef.current);
         
         if (detection.success && detection.landmarks) {
           console.log('✅ Face detectada!');
@@ -158,22 +165,25 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
           
           // Desenhar landmarks
           const displaySize = {
-            width: videoRef.current!.videoWidth,
-            height: videoRef.current!.videoHeight
+            width: videoRef.current.videoWidth,
+            height: videoRef.current.videoHeight
           };
           
-          drawFaceLandmarks(canvasRef.current!, detection, displaySize);
+          drawFaceLandmarks(canvasRef.current, detection, displaySize);
         } else {
           setFaceDetected(false);
           
           // Limpar canvas
-          const ctx = canvasRef.current!.getContext('2d');
+          const ctx = canvasRef.current.getContext('2d');
           if (ctx) {
-            ctx.clearRect(0, 0, canvasRef.current!.width, canvasRef.current!.height);
+            ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
           }
         }
       } catch (error) {
         console.error('❌ Erro na detecção:', error);
+        // Parar detecção em caso de erro
+        setIsDetecting(false);
+        return;
       }
 
       // Continuar loop se ainda estiver detectando

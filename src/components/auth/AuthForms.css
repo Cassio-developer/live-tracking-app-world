@@ -249,4 +249,127 @@
   .face-info-text {
     font-size: 0.8rem;
   }
+}
+
+/* Novos estilos para opções de login */
+.login-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-option {
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.login-option:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.login-option-button {
+  width: 100%;
+  background: white;
+  border: none;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.login-option-button:hover {
+  background: #f8f9ff;
+}
+
+.option-icon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f0f2ff;
+}
+
+.face-option .option-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.password-option .option-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.option-content {
+  flex: 1;
+  text-align: left;
+}
+
+.option-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.option-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.option-arrow {
+  font-size: 1.2rem;
+  color: #667eea;
+  font-weight: bold;
+}
+
+/* Formulário de senha */
+.password-form {
+  padding: 20px;
+  background: #f8f9ff;
+  border-top: 1px solid #e1e5e9;
+}
+
+.password-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.password-form .auth-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* Responsividade para novas opções */
+@media (max-width: 480px) {
+  .login-option-button {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .option-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
+  
+  .option-content h3 {
+    font-size: 1rem;
+  }
+  
+  .option-content p {
+    font-size: 0.8rem;
+  }
+  
+  .password-form {
+    padding: 16px;
+  }
 } 
