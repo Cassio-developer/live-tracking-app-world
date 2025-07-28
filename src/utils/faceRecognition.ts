@@ -152,7 +152,7 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
       videoElement,
       new faceapi.TinyFaceDetectorOptions({
         inputSize: 512, // Aumentado para melhor detecção
-        scoreThreshold: 0.4 // Equilibrado para evitar falsos positivos
+        scoreThreshold: 0.3 // Mais permissivo para teste em produção
       })
     ).withFaceLandmarks().withFaceDescriptor();
 
@@ -208,7 +208,7 @@ export const detectFace = async (videoElement: HTMLVideoElement): Promise<FaceDe
 export const compareFaces = (
   descriptor1: Float32Array,
   descriptor2: Float32Array,
-  threshold: number = 0.5
+  threshold: number = 0.6
 ): FaceComparisonResult => {
   if (!faceapi) {
     return {

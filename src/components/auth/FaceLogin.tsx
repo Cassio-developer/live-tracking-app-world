@@ -281,9 +281,9 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
           const eyeToMouthRatio = faceHeight / faceWidth;
           
           // Verificar se a face tem proporções humanas e tamanho adequado
-          if (faceWidth > 60 && faceHeight > 60 && 
-              faceWidth < 500 && faceHeight < 500 &&
-              eyeToMouthRatio > 1.0 && eyeToMouthRatio < 2.5) {
+          if (faceWidth > 50 && faceHeight > 50 && 
+              faceWidth < 600 && faceHeight < 600 &&
+              eyeToMouthRatio > 0.8 && eyeToMouthRatio < 3.0) {
             setFaceDetected(true);
             setError(null);
             
@@ -291,7 +291,7 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
             setDetectionCount(prev => {
               const newCount = prev + 1;
               
-              if (newCount >= 4 && detection.descriptor && !loginAttemptedRef.current) {
+              if (newCount >= 3 && detection.descriptor && !loginAttemptedRef.current) {
                 // Chamar login imediatamente
                 if (detection.descriptor) {
                   handleFaceLogin(detection.descriptor);
@@ -444,7 +444,7 @@ const FaceLogin: React.FC<FaceLoginProps> = ({
                 <span>Face detectada</span>
                 {detectionCount > 0 && (
                   <span className="detection-count">
-                    ({detectionCount}/4)
+                    ({detectionCount}/3)
                   </span>
                 )}
               </div>
