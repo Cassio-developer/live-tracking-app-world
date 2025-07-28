@@ -33,4 +33,5 @@ export interface AuthContextType {
   register: (data: RegisterData) => Promise<RegisterResponse>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  setUserDirectly: (user: User) => void;
 } 

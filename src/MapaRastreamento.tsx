@@ -6,6 +6,7 @@ import 'leaflet/dist/leaflet.css';
 import './ModalNome.css';
 import StatusUsuario from './StatusUsuario';
 import DrawerUsuarios from './DrawerUsuarios';
+import ProfileSettings from './components/ProfileSettings';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from 'leaflet';
 import { API_CONFIG } from './config/api';
@@ -19,6 +20,10 @@ interface Localizacao {
   timestamp: number;
   avatar: string;
   nome: string;
+  accuracy?: number;
+  altitude?: number;
+  heading?: number;
+  speed?: number;
 }
 
 const MapaRastreamento: React.FC = () => {
@@ -27,10 +32,8 @@ const MapaRastreamento: React.FC = () => {
 
   // URL do backend (Socket.io)
   // Backend hospedado no Render
-  // const SOCKET_URL = 'https://back-end-localization.onrender.com';
   const SOCKET_URL = API_CONFIG.SOCKET_URL;
   const POSICAO_INICIAL: [number, number] = [-23.55052, -46.633308]; // São Paulo
-  const SENHA_ADMIN = 'admin123';
 
   const tiposAvatar = [
     { label: 'Carro', seedPrefix: 'car' },
@@ -68,7 +71,7 @@ const MapaRastreamento: React.FC = () => {
 
   const loginSchema = z.object({
     nome: z.string().min(1, 'Digite seu nome ou apelido'),
-    senhaAdmin: z.string().optional(),
+
   });
   
   const [erros, setErros] = useState<{ nome?: string; senhaAdmin?: string }>({});
@@ -91,8 +94,8 @@ const MapaRastreamento: React.FC = () => {
   const [ultimaPosicao, setUltimaPosicao] = useState<[number, number] | null>(null);
   const [ultimoMovimento, setUltimoMovimento] = useState<number>(Date.now());
   const [drawerAberto, setDrawerAberto] = useState(false);
+  const [showProfileSettings, setShowProfileSettings] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [senhaAdmin, setSenhaAdmin] = useState('');
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [rota, setRota] = useState<[number, number][]>([]);
 
@@ -102,6 +105,13 @@ const MapaRastreamento: React.FC = () => {
       setShowModal(true);
     } else {
       setShowModal(false);
+    }
+  }, [user]);
+
+  // Atualizar status de admin quando o usuário faz login
+  useEffect(() => {
+    if (user) {
+      setIsAdmin(user.isAdmin || false);
     }
   }, [user]);
 
@@ -173,7 +183,7 @@ const MapaRastreamento: React.FC = () => {
     });
 
     socketRef.current.on('connect', () => {
-      console.log('Conectado ao servidor:', socketRef.current?.id);
+      // Conectado ao servidor
     });
 
     // Receber localizações de todos os usuários
@@ -189,26 +199,38 @@ const MapaRastreamento: React.FC = () => {
   useEffect(() => {
     if (showModal || !user) return;
     if (navigator.geolocation) {
+      // Configurações otimizadas para máxima precisão
+      const options = {
+        enableHighAccuracy: true,    // Usar GPS quando disponível
+        maximumAge: 1000,           // Aceitar posições com até 1 segundo de idade
+        timeout: 30000,             // 30 segundos de timeout
+      };
+
       const watchId = navigator.geolocation.watchPosition(
         (position) => {
           const novaPosicao: [number, number] = [position.coords.latitude, position.coords.longitude];
           setPosicaoAtual(novaPosicao);
           setAccuracy(position.coords.accuracy);
+          
+          // Log detalhado da precisão
+
           setRota(prev => {
-            // Só adiciona se mudou de posição
+            // Só adiciona se mudou de posição significativamente (mais de 1 metro)
             if (prev.length === 0 || prev[prev.length - 1][0] !== novaPosicao[0] || prev[prev.length - 1][1] !== novaPosicao[1]) {
               return [...prev, novaPosicao];
             }
             return prev;
           });
-          // Detectar movimento
+          
+          // Detectar movimento com precisão melhorada
           if (ultimaPosicao) {
             const dist = calcularDistancia(ultimaPosicao, novaPosicao);
-            if (dist > 2) { // Considera movimento se mudou mais de 2 metros
+            if (dist > 1) { // Considera movimento se mudou mais de 1 metro
               setUltimoMovimento(Date.now());
             }
           }
           setUltimaPosicao(novaPosicao);
+          
           if (socketRef.current) {
             socketRef.current.emit('localizacao', {
               lat: position.coords.latitude,
@@ -216,10 +238,15 @@ const MapaRastreamento: React.FC = () => {
               timestamp: Date.now(),
               avatar: avatarUrl,
               nome: user ? user.nome : nome,
-              isAdmin: isAdmin
+              isAdmin: isAdmin,
+              accuracy: position.coords.accuracy,
+              altitude: position.coords.altitude,
+              heading: position.coords.heading,
+              speed: position.coords.speed
             });
           }
-          // Salvar no backend
+          
+          // Salvar no backend com dados completos
           if (user) {
             authService.saveLocation({
               lat: position.coords.latitude,
@@ -230,9 +257,23 @@ const MapaRastreamento: React.FC = () => {
           }
         },
         (error) => {
-          console.error('Erro ao obter localização:', error);
+          console.error('❌ Erro ao obter localização:', error);
+          
+          // Tentar obter localização com configurações menos restritivas
+          if (error.code === error.TIMEOUT) {
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                setPosicaoAtual([position.coords.latitude, position.coords.longitude]);
+                setAccuracy(position.coords.accuracy);
+              },
+              (fallbackError) => {
+                console.error('Falha também com configurações alternativas:', fallbackError);
+              },
+              { enableHighAccuracy: false, timeout: 10000, maximumAge: 30000 }
+            );
+          }
         },
-        { enableHighAccuracy: true, maximumAge: 0, timeout: 30000 }
+        options
       );
       return () => navigator.geolocation.clearWatch(watchId);
     }
@@ -251,25 +292,17 @@ const MapaRastreamento: React.FC = () => {
   }
 
   // Montar lista de usuários para o drawer
-  const usuariosDrawer = isAdmin ? usuariosConectados.map(u => ({
-    id: u.socketId,
-    nome: u.nome,
-    avatar: u.avatar,
-    timestamp: Date.now(),
-    emMovimento: true, // Não temos status real, mas pode ser ajustado se necessário
-    tempoParadoSegundos: 0
-  })) : Object.entries(localizacoes).map(([userId, localizacao]) => {
-    const emMovimento = Date.now() - localizacao.timestamp < 10000;
-    const tempoParadoSegundos = Math.floor((Date.now() - localizacao.timestamp) / 1000);
-    return {
-      id: userId,
-      nome: localizacao.nome || `Usuário ${userId.slice(0, 8)}`,
-      avatar: localizacao.avatar,
-      timestamp: localizacao.timestamp,
-      emMovimento,
-      tempoParadoSegundos,
-    };
-  });
+  const usuariosDrawer = isAdmin 
+    ? usuariosConectados.map(u => ({
+        id: u.socketId,
+        nome: u.nome,
+        avatar: u.avatar,
+        timestamp: Date.now(),
+        emMovimento: true, // Não temos status real, mas pode ser ajustado se necessário
+        tempoParadoSegundos: 0
+      }))
+    : []; // Usuários normais começam com lista vazia
+  
   // Adicionar o próprio usuário na lista
   usuariosDrawer.push({
     id: 'me',
@@ -282,7 +315,6 @@ const MapaRastreamento: React.FC = () => {
 
   function handleRemoverUsuario(userId: string) {
     // Implemente a lógica para remover um usuário do drawer
-    console.log(`Removendo usuário: ${userId}`);
   }
 
   return (
@@ -313,7 +345,7 @@ const MapaRastreamento: React.FC = () => {
         Sair
       </button>
 
-      {/* Botão para abrir drawer */}
+      {/* Botão para abrir drawer - TODOS OS USUÁRIOS */}
       <button
         style={{
           position: 'fixed',
@@ -340,7 +372,7 @@ const MapaRastreamento: React.FC = () => {
         style={{
           position: 'fixed',
           top: 20,
-          right: 43,
+          right: 43, // Volta para posição original
           zIndex: 1200,
           background: '#28a745',
           color: '#fff',
@@ -357,6 +389,31 @@ const MapaRastreamento: React.FC = () => {
       >
         📈
       </button>
+
+      {/* Botão para configurações do perfil */}
+      <button
+        style={{
+          position: 'fixed',
+          top: 20,
+          right: 157,
+          zIndex: 1200,
+          background: '#667eea',
+          color: '#fff',
+          border: 'none',
+          borderRadius: '50%',
+          width: 48,
+          height: 48,
+          fontSize: 20,
+          cursor: 'pointer',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+        }}
+        onClick={() => setShowProfileSettings(true)}
+        title="Configurações do perfil"
+      >
+        ⚙️
+      </button>
+
+      {/* Drawer de usuários - TODOS OS USUÁRIOS */}
       <DrawerUsuarios
         usuarios={usuariosDrawer}
         aberto={drawerAberto}
@@ -365,6 +422,36 @@ const MapaRastreamento: React.FC = () => {
         onRemoverUsuario={handleRemoverUsuario}
         meuId={socketRef.current?.id || ''}
       />
+
+      {/* Modal de configurações do perfil */}
+      {showProfileSettings && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '20px'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowProfileSettings(false);
+            }
+          }}
+        >
+          <ProfileSettings
+            onClose={() => setShowProfileSettings(false)}
+            className="profile-settings-modal"
+          />
+        </div>
+      )}
+
       {showModal && <ModalAvatar />}
       <MapContainer center={posicaoAtual} zoom={16} style={{ height: '100%', width: '100%' }}>
         <CentralizarMapa posicao={posicaoAtual} />

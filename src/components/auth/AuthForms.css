@@ -97,6 +97,76 @@
   transform: none;
 }
 
+/* Estilos para login facial */
+.face-login-option {
+  margin-bottom: 1.5rem;
+}
+
+.face-login-button {
+  width: 100%;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.face-login-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(40, 167, 69, 0.3);
+}
+
+.face-icon {
+  font-size: 1.2rem;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: #e1e5e9;
+}
+
+.divider span {
+  background: white;
+  padding: 0 1rem;
+  color: #666;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.face-info {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.face-info-text {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #666;
+  line-height: 1.4;
+}
+
 .auth-switch {
   text-align: center;
   margin-top: 1.5rem;
@@ -166,8 +236,140 @@
     font-size: 0.9rem;
   }
   
-  .auth-button {
+  .auth-button,
+  .face-login-button {
     padding: 10px 20px;
     font-size: 0.9rem;
+  }
+  
+  .face-info {
+    padding: 0.5rem 0.75rem;
+  }
+  
+  .face-info-text {
+    font-size: 0.8rem;
+  }
+}
+
+/* Novos estilos para opções de login */
+.login-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.login-option {
+  border: 2px solid #e1e5e9;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.login-option:hover {
+  border-color: #667eea;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+}
+
+.login-option-button {
+  width: 100%;
+  background: white;
+  border: none;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: all 0.3s ease;
+}
+
+.login-option-button:hover {
+  background: #f8f9ff;
+}
+
+.option-icon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  background: #f0f2ff;
+}
+
+.face-option .option-icon {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: white;
+}
+
+.password-option .option-icon {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.option-content {
+  flex: 1;
+  text-align: left;
+}
+
+.option-content h3 {
+  margin: 0 0 4px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.option-content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.option-arrow {
+  font-size: 1.2rem;
+  color: #667eea;
+  font-weight: bold;
+}
+
+/* Formulário de senha */
+.password-form {
+  padding: 20px;
+  background: #f8f9ff;
+  border-top: 1px solid #e1e5e9;
+}
+
+.password-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.password-form .auth-button {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+/* Responsividade para novas opções */
+@media (max-width: 480px) {
+  .login-option-button {
+    padding: 16px;
+    gap: 12px;
+  }
+  
+  .option-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 1.5rem;
+  }
+  
+  .option-content h3 {
+    font-size: 1rem;
+  }
+  
+  .option-content p {
+    font-size: 0.8rem;
+  }
+  
+  .password-form {
+    padding: 16px;
   }
 } 
