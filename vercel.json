@@ -1,0 +1,6 @@
+{
+  "buildCommand": "GENERATE_SOURCEMAP=false npm run build",
+  "outputDirectory": "build",
+  "installCommand": "npm install",
+  "framework": "create-react-app"
+} 
