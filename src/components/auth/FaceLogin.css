@@ -205,8 +205,9 @@
 /* Responsividade */
 @media (max-width: 768px) {
   .face-login-container {
-    padding: 1rem;
-    margin: 1rem;
+    /* padding: 1rem;
+    margin: 1rem; */
+   margin-left: -2rem;
   }
   
   .camera-container {
