@@ -9,11 +9,12 @@ import DrawerUsuarios from './DrawerUsuarios';
 import ProfileSettings from './components/ProfileSettings';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from 'leaflet';
-import { API_CONFIG } from './config/api';
+import { config } from './config/api';
 import { useAuth } from './contexts/AuthContext';
 import { authService } from './services/authService';
 import { z } from 'zod';
 import { useIsMobile, useOrientation } from './hooks';
+import { useBackgroundSync } from './hooks/useBackgroundSync';
 
 interface Localizacao {
   lat: number;
@@ -33,7 +34,7 @@ const MapaRastreamento: React.FC = () => {
 
   // URL do backend (Socket.io)
   // Backend hospedado no Render
-  const SOCKET_URL = API_CONFIG.SOCKET_URL;
+  const SOCKET_URL = config.API_URL;
   const POSICAO_INICIAL: [number, number] = [-23.55052, -46.633308]; // São Paulo
 
   const tiposAvatar = [
@@ -134,7 +135,7 @@ const MapaRastreamento: React.FC = () => {
             samples: samples 
           }));
           
-          console.log('✅ Calibração GPS concluída');
+
         }
       }
     }, 1000);
@@ -168,6 +169,7 @@ const MapaRastreamento: React.FC = () => {
   // Hook para detectar dispositivo móvel
   const { isMobile, isTablet, screenWidth, screenHeight } = useIsMobile();
   const orientation = useOrientation();
+  const { saveLocationForSync } = useBackgroundSync();
 
   // Estados do componente
   const [showModal, setShowModal] = useState<boolean>(false);
@@ -221,7 +223,9 @@ const MapaRastreamento: React.FC = () => {
         <h2>Escolha seu Avatar</h2>
         <p>Esta será sua imagem permanente no sistema.</p>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1rem' }}>
-          <img src={avatarUrl} alt="Avatar" style={{ width: 64, height: 64, borderRadius: '50%', marginBottom: 8, border: '2px solid #007bff' }} />
+          <div className="avatar-modern avatar-large" style={{ marginBottom: 8 }}>
+            <img src={avatarUrl} alt="Avatar" />
+          </div>
           <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
             {tiposAvatar.map(tipo => (
               <button
@@ -313,22 +317,10 @@ const MapaRastreamento: React.FC = () => {
         (position) => {
           // Verificar se a precisão é aceitável
           if (position.coords.accuracy > accuracyThreshold) {
-            console.log(`⚠️ Posição rejeitada - Precisão muito baixa: ${position.coords.accuracy}m (threshold: ${accuracyThreshold}m)`);
-            console.log(`📊 Dados da posição:`, {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-              altitude: position.coords.altitude,
-              heading: position.coords.heading,
-              speed: position.coords.speed
-            });
-            
             // Se a precisão for extremamente baixa (> 1000m), tentar configurações alternativas
             if (position.coords.accuracy > 1000) {
-              console.log('🔄 Tentando obter posição com configurações alternativas...');
               navigator.geolocation.getCurrentPosition(
                 (fallbackPosition) => {
-                  console.log(`✅ Posição alternativa obtida - Precisão: ${fallbackPosition.coords.accuracy}m`);
                   const fallbackPos: [number, number] = [fallbackPosition.coords.latitude, fallbackPosition.coords.longitude];
                   setPosicaoAtual(fallbackPos);
                   setAccuracy(fallbackPosition.coords.accuracy);
@@ -355,7 +347,6 @@ const MapaRastreamento: React.FC = () => {
             
             // Rejeitar se velocidade for impossível (> 50 m/s = 180 km/h)
             if (speed > 50) {
-              console.log(`⚠️ Posição rejeitada - Velocidade impossível: ${speed.toFixed(1)} m/s`);
               return;
             }
           }
@@ -370,8 +361,7 @@ const MapaRastreamento: React.FC = () => {
           setPosicaoAtual(smoothedPosition);
           setAccuracy(position.coords.accuracy);
           
-          // Log detalhado da precisão
-          console.log(`📍 Nova localização - Precisão: ${position.coords.accuracy}m, Velocidade: ${position.coords.speed || 'N/A'} m/s`);
+
 
           // Adicionar à rota apenas se mudou significativamente (mais de 2 metros)
           setRota(prev => {
@@ -399,21 +389,45 @@ const MapaRastreamento: React.FC = () => {
           setUltimaPosicao(novaPosicao);
           lastValidPosition = position;
           
-          if (socketRef.current) {
-            socketRef.current.emit('localizacao', {
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-              timestamp: Date.now(),
-              avatar: avatarUrl,
-              nome: user ? user.nome : nome,
-              isAdmin: isAdmin,
-              accuracy: position.coords.accuracy,
-              altitude: position.coords.altitude,
-              heading: position.coords.heading,
-              speed: position.coords.speed
-            });
-          }
-          
+          // Enviar localização para o servidor
+          const enviarLocalizacao = async (posicao: GeolocationPosition) => {
+            if (!user || !socketRef.current) return;
+
+            const localizacao = {
+              latitude: posicao.coords.latitude,
+              longitude: posicao.coords.longitude,
+              accuracy: posicao.coords.accuracy,
+              timestamp: posicao.timestamp,
+              userId: user.id,
+              token: localStorage.getItem('token') || ''
+            };
+
+            try {
+              // Usar Background Sync se disponível
+              const result = await saveLocationForSync(localizacao);
+              
+              // Enviar via Socket.io também
+
+              // Enviar via Socket.io também
+              socketRef.current.emit('identificacao', {
+                id: user.id,
+                nome: user.nome,
+                avatar: avatarUrl,
+                isAdmin: user.isAdmin
+              });
+
+              socketRef.current.emit('localizacao', {
+                userId: user.id,
+                latitude: posicao.coords.latitude,
+                longitude: posicao.coords.longitude,
+                accuracy: posicao.coords.accuracy,
+                timestamp: posicao.timestamp
+              });
+            } catch (error) {
+              console.error('❌ Erro ao enviar localização:', error);
+            }
+          };
+
           // Salvar no backend com dados completos
           if (user) {
             authService.saveLocation({
@@ -429,10 +443,8 @@ const MapaRastreamento: React.FC = () => {
           
           // Tentar obter localização com configurações menos restritivas
           if (error.code === error.TIMEOUT) {
-            console.log('⏰ Timeout - Tentando com configurações alternativas...');
             navigator.geolocation.getCurrentPosition(
               (position) => {
-                console.log('✅ Localização obtida com configurações alternativas');
                 setPosicaoAtual([position.coords.latitude, position.coords.longitude]);
                 setAccuracy(position.coords.accuracy);
               },
@@ -452,12 +464,32 @@ const MapaRastreamento: React.FC = () => {
 
   // Função para criar um ícone personalizado com a imagem do avatar
   function criarIconeAvatar(url: string) {
-    return L.icon({
-      iconUrl: url,
-      iconSize: [40, 40],
-      iconAnchor: [20, 40],
-      popupAnchor: [0, -40],
+    return L.divIcon({
+      html: `
+        <div style="
+          width: 40px; 
+          height: 40px; 
+          border-radius: 50%; 
+          overflow: hidden; 
+          border: 3px solid #fff;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+          background: #fff;
+        ">
+          <img 
+            src="${url}" 
+            alt="avatar" 
+            style="
+              width: 100%; 
+              height: 100%; 
+              object-fit: cover; 
+              border-radius: 50%;
+            "
+          />
+        </div>
+      `,
       className: 'avatar-marker',
+      iconSize: [40, 40],
+      iconAnchor: [20, 20]
     });
   }
 
@@ -532,7 +564,9 @@ const MapaRastreamento: React.FC = () => {
           cursor: 'pointer',
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}
-        onClick={() => setDrawerAberto(true)}
+        onClick={() => {
+          setDrawerAberto(true);
+        }}
         title="Usuários online"
       >
         👥
@@ -605,7 +639,9 @@ const MapaRastreamento: React.FC = () => {
         title={calibrationData.isCalibrating ? "Calibrando GPS..." : "Calibrar GPS"}
       >
         {calibrationData.isCalibrating ? '⏳' : '��'}
-      </button>
+        </button>
+
+
 
       {/* Indicador de qualidade da localização */}
       {accuracy && (

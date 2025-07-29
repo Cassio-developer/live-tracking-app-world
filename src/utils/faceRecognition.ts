@@ -253,14 +253,11 @@ export const captureFaceSamples = async (
   try {
     const descriptors: Float32Array[] = [];
 
-    console.log(`🔄 Capturando ${sampleCount} amostras faciais...`);
-
     for (let i = 0; i < sampleCount; i++) {
       const detection = await detectFace(videoElement);
 
       if (detection.success && detection.descriptor) {
         descriptors.push(detection.descriptor);
-        console.log(`✅ Amostra ${i + 1}/${sampleCount} capturada`);
 
         if (i < sampleCount - 1) {
           await new Promise(resolve => setTimeout(resolve, intervalMs));
@@ -305,7 +302,6 @@ export const drawFaceLandmarks = (
 ): void => {
   // Função temporariamente desabilitada para evitar erros
   // TODO: Implementar desenho de landmarks corretamente
-  console.log('🎨 drawFaceLandmarks chamada (desabilitada temporariamente)');
 };
 
 /**
@@ -326,6 +322,5 @@ export const isFaceRecognitionSupported = (): boolean => {
 export const stopVideoStream = (stream: MediaStream | null): void => {
   if (stream) {
     stream.getTracks().forEach(track => track.stop());
-    console.log('🛑 Stream de vídeo parado');
   }
 }; 

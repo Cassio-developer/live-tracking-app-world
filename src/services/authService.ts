@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { config } from '../config/api';
 import { LoginData, RegisterData, User, AuthResponse, RegisterResponse } from '../types/auth';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+const API_URL = config.API_URL;
 
 const api = axios.create({
   baseURL: API_URL,
@@ -43,11 +44,8 @@ export const authService = {
     return response.data.locations;
   },
   updateAvatar: async (avatar: string) => {
-    console.log('Tentando atualizar avatar:', avatar);
-    console.log('API URL:', process.env.REACT_APP_API_URL || 'http://localhost:4000');
     try {
       const response = await api.patch('/api/users/me/avatar', { avatar });
-      console.log('Avatar atualizado com sucesso:', response.data);
       return response.data;
     } catch (error: any) {
       console.error('Erro ao atualizar avatar:', error);

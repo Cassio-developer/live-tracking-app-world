@@ -8,7 +8,9 @@ import {
   loadFaceModels,
   FaceDetectionResult 
 } from '../../utils/faceRecognition';
-import { faceAuthService, FaceLoginResponse } from '../../services/faceAuthService';
+import { faceAuthService } from '../../services/faceAuthService';
+import { FaceLoginResponse } from '../../types/auth';
+
 import { useAuth } from '../../contexts/AuthContext';
 import './FaceLogin.css';
 

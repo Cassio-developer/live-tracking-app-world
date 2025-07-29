@@ -25,6 +25,35 @@ export interface RegisterResponse {
   message: string;
 }
 
+// export interface FaceLoginResponse {
+//   success: boolean;
+//   message: string;
+//   user?: User;
+//   token?: string;
+// }
+export interface FaceLoginResponse {
+  success: boolean;
+  message: string;
+  user?: {
+    id: string;
+    nome: string;
+    isAdmin: boolean;
+    avatar?: string;
+  };
+  token?: string;
+}
+export interface FaceRegistrationResponse {
+  success: boolean;
+  message: string;
+  userId?: string;
+}
+
+export interface FaceDataResponse {
+  success: boolean;
+  hasFaceData: boolean;
+  message: string;
+}
+
 export interface AuthContextType {
   user: User | null;
   isAuthenticated: boolean;
