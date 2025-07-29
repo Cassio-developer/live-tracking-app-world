@@ -18,6 +18,85 @@
 .env.test.local
 .env.production.local
 
+# Environment files
+.env
+.env.example
+
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+*.log
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Emulator and Android files
+.emulator/
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.jar
+*.war
+*.ear
+*.nar
+
+# Bash and shell files
+.bash_history
+.bash_profile
+.bashrc
+.zshrc
+.zsh_history
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# React
+/build
+/coverage
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# PWA
+sw.js
+service-worker.js
+
+# Face recognition models (if too large)
+/public/models/*.bin
+/public/models/*.shard*
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z

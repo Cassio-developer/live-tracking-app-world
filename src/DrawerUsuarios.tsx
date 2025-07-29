@@ -22,7 +22,14 @@ interface DrawerUsuariosProps {
 
 const DrawerUsuarios: React.FC<DrawerUsuariosProps> = ({ usuarios, aberto, onClose, isAdmin, onRemoverUsuario, meuId }) => {
 
-// console.log('usuarios',usuarios)
+  console.log('📋 DrawerUsuarios - Props recebidas:', {
+    usuarios: usuarios.length,
+    aberto,
+    isAdmin,
+    meuId
+  });
+  console.log('👥 Lista de usuários no drawer:', usuarios);
+
   return (
     <div className={`drawer-usuarios-overlay${aberto ? ' aberto' : ''}`}>
       <div className="drawer-usuarios">
@@ -32,7 +39,9 @@ const DrawerUsuarios: React.FC<DrawerUsuariosProps> = ({ usuarios, aberto, onClo
           {usuarios.length === 0 && <p>Nenhum usuário online.</p>}
           {usuarios.map(usuario => (
             <div key={usuario.id} className="drawer-usuario-item">
-              <img src={usuario.avatar} alt="avatar" style={{ width: 36, height: 36, borderRadius: '50%', marginRight: 10, border: '1.5px solid #007bff' }} />
+              <div className="avatar-modern avatar-small" style={{ marginRight: 10 }}>
+                <img src={usuario.avatar} alt="avatar" />
+              </div>
               <StatusUsuario
                 online={true}
                 nome={usuario.nome}

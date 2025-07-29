@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import FaceSettings from './auth/FaceSettings';
+import BackgroundSyncStatus from './BackgroundSyncStatus';
 import './ProfileSettings.css';
 
 interface ProfileSettingsProps {
@@ -56,7 +57,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
       <div className="profile-settings-content">
         {/* Informações do usuário */}
         <div className="user-info-card">
-          <div className="user-avatar">
+          <div className="user-avatar avatar-modern avatar-large">
             {user?.avatar ? (
               <img src={user.avatar} alt="Avatar" />
             ) : (
@@ -107,6 +108,8 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({
 
           <div className="settings-section">
             <h4>📱 Aplicativo</h4>
+            
+            <BackgroundSyncStatus />
             
             <button
               onClick={() => window.alert('Funcionalidade em desenvolvimento')}

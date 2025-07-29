@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { config } from '../config/api';
 import { LoginData, RegisterData, User, AuthResponse, RegisterResponse } from '../types/auth';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:4000';
+const API_URL = config.API_URL;
 
 const api = axios.create({
   baseURL: API_URL,

@@ -1,4 +1,6 @@
-import { API_CONFIG } from '../config/api';
+import axios from 'axios';
+import { config } from '../config/api';
+import { FaceLoginResponse } from '../types/auth';
 
 export interface FaceRegistrationRequest {
   descriptors: Float32Array[];
@@ -14,17 +16,17 @@ export interface FaceRegistrationResponse {
   userId?: string;
 }
 
-export interface FaceLoginResponse {
-  success: boolean;
-  message: string;
-  user?: {
-    id: string;
-    nome: string;
-    isAdmin: boolean;
-    avatar?: string;
-  };
-  token?: string;
-}
+// export interface FaceLoginResponse {
+//   success: boolean;
+//   message: string;
+//   user?: {
+//     id: string;
+//     nome: string;
+//     isAdmin: boolean;
+//     avatar?: string;
+//   };
+//   token?: string;
+// }
 
 export interface FaceDataResponse {
   success: boolean;
@@ -39,7 +41,7 @@ class FaceAuthService {
   private baseURL: string;
 
   constructor() {
-    this.baseURL = API_CONFIG.API_URL;
+    this.baseURL = config.API_URL;
   }
 
   /**
@@ -49,27 +51,14 @@ class FaceAuthService {
    */
   async registerFace(descriptors: Float32Array[]): Promise<FaceRegistrationResponse> {
     try {
-      const response = await fetch(`${this.baseURL}/api/auth/register-face`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          descriptors: descriptors.map(desc => Array.from(desc))
-        })
+      const response = await axios.post(`${this.baseURL}/api/auth/register-face`, {
+        descriptors: descriptors.map(desc => Array.from(desc))
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao registrar face');
-      }
 
       return {
         success: true,
-        message: data.message,
-        userId: data.userId
+        message: response.data.message,
+        userId: response.data.userId
       };
     } catch (error) {
       console.error('❌ Erro no registro facial:', error);
@@ -87,28 +76,15 @@ class FaceAuthService {
    */
   async loginWithFace(descriptor: Float32Array): Promise<FaceLoginResponse> {
     try {
-      const response = await fetch(`${this.baseURL}/api/auth/face-login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          descriptor: Array.from(descriptor)
-        })
+      const response = await axios.post(`${this.baseURL}/api/auth/face-login`, {
+        descriptor: Array.from(descriptor)
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro no login facial');
-      }
 
       return {
         success: true,
-        message: data.message,
-        user: data.user,
-        token: data.token
+        message: response.data.message,
+        user: response.data.user,
+        token: response.data.token
       };
     } catch (error) {
       console.error('❌ Erro no login facial:', error);
@@ -125,24 +101,12 @@ class FaceAuthService {
    */
   async checkFaceData(): Promise<FaceDataResponse> {
     try {
-      const response = await fetch(`${this.baseURL}/api/auth/face-data`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao verificar dados faciais');
-      }
+      const response = await axios.get(`${this.baseURL}/api/auth/face-data`);
 
       return {
         success: true,
-        hasFaceData: data.hasFaceData,
-        message: data.message
+        hasFaceData: response.data.hasFaceData,
+        message: response.data.message
       };
     } catch (error) {
       console.error('❌ Erro ao verificar dados faciais:', error);
@@ -160,23 +124,11 @@ class FaceAuthService {
    */
   async removeFaceData(): Promise<FaceRegistrationResponse> {
     try {
-      const response = await fetch(`${this.baseURL}/api/auth/remove-face`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include'
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao remover dados faciais');
-      }
+      const response = await axios.delete(`${this.baseURL}/api/auth/remove-face`);
 
       return {
         success: true,
-        message: data.message
+        message: response.data.message
       };
     } catch (error) {
       console.error('❌ Erro ao remover dados faciais:', error);
@@ -194,26 +146,13 @@ class FaceAuthService {
    */
   async updateFaceData(descriptors: Float32Array[]): Promise<FaceRegistrationResponse> {
     try {
-      const response = await fetch(`${this.baseURL}/api/auth/update-face`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        body: JSON.stringify({
-          descriptors: descriptors.map(desc => Array.from(desc))
-        })
+      const response = await axios.put(`${this.baseURL}/api/auth/update-face`, {
+        descriptors: descriptors.map(desc => Array.from(desc))
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao atualizar dados faciais');
-      }
 
       return {
         success: true,
-        message: data.message
+        message: response.data.message
       };
     } catch (error) {
       console.error('❌ Erro ao atualizar dados faciais:', error);
