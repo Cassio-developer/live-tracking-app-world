@@ -33,7 +33,7 @@ export const authService = {
     const response = await api.get('/api/auth/users');
     return response.data;
   },
-  saveLocation: async (data: { lat: number; lng: number; accuracy?: number; timestamp: number }) => {
+  saveLocation: async (data: { latitude: number; longitude: number; accuracy?: number; timestamp: number }) => {
     await api.post('/api/locations', data);
   },
   getLocationHistory: async (from?: string, to?: string) => {

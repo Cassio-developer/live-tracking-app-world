@@ -17,8 +17,8 @@ import { useIsMobile, useOrientation } from './hooks';
 import { useBackgroundSync } from './hooks/useBackgroundSync';
 
 interface Localizacao {
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
   timestamp: number;
   avatar: string;
   nome: string;
@@ -181,6 +181,7 @@ const MapaRastreamento: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [rota, setRota] = useState<[number, number][]>([]);
+  const [showAdminDetails, setShowAdminDetails] = useState(false);
 
   // Sistema de calibração para melhorar precisão
   const [calibrationData, setCalibrationData] = useState<{
@@ -215,6 +216,24 @@ const MapaRastreamento: React.FC = () => {
       setIsAdmin(user.isAdmin || false);
     }
   }, [user]);
+
+  // Fechar detalhes do admin quando clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.admin-details')) {
+        setShowAdminDetails(false);
+      }
+    };
+
+    if (showAdminDetails) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showAdminDetails]);
 
   // Modal de seleção de avatar
   const ModalAvatar = () => (
@@ -431,8 +450,8 @@ const MapaRastreamento: React.FC = () => {
           // Salvar no backend com dados completos
           if (user) {
             authService.saveLocation({
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
               accuracy: position.coords.accuracy,
               timestamp: Date.now()
             }).catch((err: unknown) => console.error('Erro ao salvar localização:', err));
@@ -660,15 +679,94 @@ const MapaRastreamento: React.FC = () => {
             boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
             display: 'flex',
             alignItems: 'center',
-            gap: isMobile ? '4px' : '8px'
+            gap: '4px'
           }}
         >
-          <span>📍</span>
-          <span>
-            {accuracy < 10 ? 'Excelente' : accuracy < 50 ? 'Boa' : accuracy < 200 ? 'Aceitável' : 'Baixa'} 
-            ({accuracy.toFixed(1)}m)
-          </span>
-          {calibrationData.calibrated && <span>✅</span>}
+          📍 ±{Math.round(accuracy)}m
+        </div>
+      )}
+
+      {/* Indicador de status para admin */}
+      {isAdmin && (
+        <div
+          className="admin-details"
+          style={{
+            position: 'fixed',
+            top: isMobile ? 89 : 20,
+            left: isMobile ? 200 : 300,
+            zIndex: 1000,
+            background: '#007bff',
+            color: '#fff',
+            border: 'none',
+            borderRadius: isMobile ? '4px' : '8px',
+            padding: isMobile ? '4px 8px' : '8px 16px',
+            fontSize: isMobile ? '12px' : '14px',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            flexDirection: 'column',
+            minWidth: '150px',
+            cursor: 'pointer'
+          }}
+          onClick={() => setShowAdminDetails(!showAdminDetails)}
+          title="Clique para ver detalhes"
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            👥 {usuariosConectados.length} online
+            <span style={{ fontSize: '10px', opacity: 0.7 }}>▼</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', opacity: 0.9 }}>
+            📍 {usuariosConectados.filter(u => u.latitude && u.longitude && (Date.now() - (u.lastLocationUpdate || 0)) < 30000).length} ativos
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', opacity: 0.8 }}>
+            👑 {usuariosConectados.filter(u => u.isAdmin).length} admin
+          </div>
+        </div>
+      )}
+
+      {/* Detalhes expandidos do admin */}
+      {isAdmin && showAdminDetails && (
+        <div
+          className="admin-details"
+          style={{
+            position: 'fixed',
+            top: isMobile ? 180 : 120,
+            left: isMobile ? 200 : 300,
+            zIndex: 1000,
+            background: '#fff',
+            border: '1px solid #ddd',
+            borderRadius: '8px',
+            padding: '12px',
+            fontSize: '12px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            minWidth: '200px',
+            maxHeight: '300px',
+            overflowY: 'auto'
+          }}
+        >
+          <div style={{ fontWeight: 'bold', marginBottom: '8px', color: '#333' }}>
+            👥 Usuários Conectados
+          </div>
+          {usuariosConectados.map((usuario) => (
+            <div key={usuario.socketId} style={{ 
+              padding: '4px 0', 
+              borderBottom: '1px solid #eee',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center'
+            }}>
+              <div>
+                <span style={{ fontWeight: 'bold' }}>{usuario.nome}</span>
+                <span style={{ fontSize: '10px', color: '#666', marginLeft: '4px' }}>
+                  {usuario.isAdmin ? '👑' : '👤'}
+                </span>
+              </div>
+              <div style={{ fontSize: '10px', color: '#999' }}>
+                {usuario.latitude && usuario.longitude ? '📍' : '⚠️'}
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -750,32 +848,115 @@ const MapaRastreamento: React.FC = () => {
           />
         )}
         {/* Marcadores de outros usuários */}
-        {Object.entries(localizacoes).map(([userId, localizacao]) => {
-          if (userId !== socketRef.current?.id) {
-            // Calcular status de movimento para outros usuários
-            // (Simples: se atualizou nos últimos 10s, está em movimento)
-            const emMovimento = Date.now() - localizacao.timestamp < 10000;
-            const tempoParadoSegundos = Math.floor((Date.now() - localizacao.timestamp) / 1000);
-            return (
-              <Marker
-                key={userId}
-                position={[localizacao.lat, localizacao.lng]}
-                icon={criarIconeAvatar(localizacao.avatar)}
-              >
-                <Popup>
-                  <StatusUsuario
-                    online={true}
-                    nome={localizacao.nome || `Usuário ${userId.slice(0, 8)}`}
-                    timestamp={localizacao.timestamp}
-                    emMovimento={emMovimento}
-                    tempoParadoSegundos={tempoParadoSegundos}
-                  />
-                </Popup>
-              </Marker>
-            );
-          }
-          return null;
-        })}
+        {isAdmin ? (
+          // Para admin: mostrar TODOS os usuários conectados
+          (() => {
+            const usuariosParaRenderizar = usuariosConectados.filter(usuario => usuario.socketId !== socketRef.current?.id);
+            
+            return usuariosParaRenderizar.map((usuario, index) => {
+              const hasLocation = usuario.latitude && usuario.longitude;
+              const isOnline = usuario.lastLocationUpdate && (Date.now() - usuario.lastLocationUpdate < 30000); // 30s
+              
+              // Verificar se o usuário tem dados válidos
+              if (!usuario.nome || !usuario.socketId) {
+                return null;
+              }
+              
+              return (
+                <div key={usuario.socketId}>
+                  {/* Marcador do usuário - mostrar sempre */}
+                  <Marker
+                    position={hasLocation ? [usuario.latitude, usuario.longitude] : [-23.55052, -46.633308]}
+                    icon={criarIconeAvatar(usuario.avatar)}
+                    opacity={hasLocation && isOnline ? 1 : 0.5}
+                  >
+                    <Popup>
+                      <div style={{ textAlign: 'center', minWidth: '150px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
+                          {usuario.nome} (ID: {usuario.socketId?.slice(0, 8)}...)
+                        </div>
+                        <div style={{ fontSize: 12, color: '#666' }}>
+                          {usuario.isAdmin ? '👑 Admin' : '👤 Usuário'}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+                          {hasLocation ? (isOnline ? '📍 Online' : '⚠️ Offline') : '❓ Sem localização'}
+                          {usuario.accuracy && (
+                            <div>Precisão: ±{Math.round(usuario.accuracy)}m</div>
+                          )}
+                          {usuario.lastLocationUpdate && (
+                            <div style={{ fontSize: 10, color: '#999', marginTop: 2 }}>
+                              Atualizado: {Math.floor((Date.now() - usuario.lastLocationUpdate) / 1000)}s atrás
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 10, color: '#999', marginTop: 4, borderTop: '1px solid #eee', paddingTop: 4 }}>
+                          Posição: {hasLocation ? 'Real' : 'Padrão (São Paulo)'}
+                        </div>
+                      </div>
+                    </Popup>
+                  </Marker>
+                  
+                  {/* Círculo de precisão (raio aproximado) - apenas se tiver localização */}
+                  {hasLocation && usuario.accuracy && (
+                    <Circle
+                      center={[usuario.latitude, usuario.longitude]}
+                      radius={usuario.accuracy}
+                      pathOptions={{ 
+                        color: isOnline ? '#28a745' : '#6c757d', 
+                        fillColor: isOnline ? '#28a745' : '#6c757d', 
+                        fillOpacity: 0.1,
+                        weight: 1
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            });
+          })()
+        ) : (
+          // Para usuários normais: mostrar apenas localizações recebidas via Socket
+          Object.entries(localizacoes).map(([userId, localizacao]) => {
+            if (userId !== socketRef.current?.id) {
+              // Calcular status de movimento para outros usuários
+              // (Simples: se atualizou nos últimos 10s, está em movimento)
+              const emMovimento = Date.now() - localizacao.timestamp < 10000;
+              const tempoParadoSegundos = Math.floor((Date.now() - localizacao.timestamp) / 1000);
+              return (
+                <div key={userId}>
+                  <Marker
+                    position={[localizacao.latitude, localizacao.longitude]}
+                    icon={criarIconeAvatar(localizacao.avatar)}
+                  >
+                    <Popup>
+                      <StatusUsuario
+                        online={true}
+                        nome={localizacao.nome || `Usuário ${userId.slice(0, 8)}`}
+                        timestamp={localizacao.timestamp}
+                        emMovimento={emMovimento}
+                        tempoParadoSegundos={tempoParadoSegundos}
+                      />
+                    </Popup>
+                  </Marker>
+                  
+                  {/* Círculo de precisão para usuários normais também */}
+                  {localizacao.accuracy && (
+                    <Circle
+                      center={[localizacao.latitude, localizacao.longitude]}
+                      radius={localizacao.accuracy}
+                      pathOptions={{ 
+                        color: '#007bff', 
+                        fillColor: '#007bff', 
+                        fillOpacity: 0.1,
+                        weight: 1
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })
+        )}
       </MapContainer>
     </div>
   );
