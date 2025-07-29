@@ -135,7 +135,7 @@ const MapaRastreamento: React.FC = () => {
             samples: samples 
           }));
           
-          console.log('✅ Calibração GPS concluída');
+
         }
       }
     }, 1000);
@@ -273,12 +273,6 @@ const MapaRastreamento: React.FC = () => {
 
     // Envie identificação ao conectar
     if (user) {
-      console.log('🔌 Enviando identificação para o servidor:', {
-        nome: user.nome,
-        avatar: user.avatar,
-        isAdmin: user.isAdmin
-      });
-      console.log('👤 Dados completos do usuário:', user);
       socketRef.current.emit('identificacao', {
         nome: user.nome,
         avatar: user.avatar,
@@ -288,9 +282,6 @@ const MapaRastreamento: React.FC = () => {
 
     // Recebe lista de conectados (apenas admin)
     socketRef.current.on('usuariosConectados', (usuarios) => {
-      console.log('📊 Recebendo lista de usuários conectados:', usuarios);
-      console.log('👤 Usuário atual é admin?', user?.isAdmin);
-      console.log('📋 Total de usuários recebidos:', usuarios.length);
       setUsuariosConectados(usuarios);
     });
 
@@ -326,22 +317,10 @@ const MapaRastreamento: React.FC = () => {
         (position) => {
           // Verificar se a precisão é aceitável
           if (position.coords.accuracy > accuracyThreshold) {
-            console.log(`⚠️ Posição rejeitada - Precisão muito baixa: ${position.coords.accuracy}m (threshold: ${accuracyThreshold}m)`);
-            console.log(`📊 Dados da posição:`, {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              accuracy: position.coords.accuracy,
-              altitude: position.coords.altitude,
-              heading: position.coords.heading,
-              speed: position.coords.speed
-            });
-            
             // Se a precisão for extremamente baixa (> 1000m), tentar configurações alternativas
             if (position.coords.accuracy > 1000) {
-              console.log('🔄 Tentando obter posição com configurações alternativas...');
               navigator.geolocation.getCurrentPosition(
                 (fallbackPosition) => {
-                  console.log(`✅ Posição alternativa obtida - Precisão: ${fallbackPosition.coords.accuracy}m`);
                   const fallbackPos: [number, number] = [fallbackPosition.coords.latitude, fallbackPosition.coords.longitude];
                   setPosicaoAtual(fallbackPos);
                   setAccuracy(fallbackPosition.coords.accuracy);
@@ -368,7 +347,6 @@ const MapaRastreamento: React.FC = () => {
             
             // Rejeitar se velocidade for impossível (> 50 m/s = 180 km/h)
             if (speed > 50) {
-              console.log(`⚠️ Posição rejeitada - Velocidade impossível: ${speed.toFixed(1)} m/s`);
               return;
             }
           }
@@ -383,8 +361,7 @@ const MapaRastreamento: React.FC = () => {
           setPosicaoAtual(smoothedPosition);
           setAccuracy(position.coords.accuracy);
           
-          // Log detalhado da precisão
-          console.log(`📍 Nova localização - Precisão: ${position.coords.accuracy}m, Velocidade: ${position.coords.speed || 'N/A'} m/s`);
+
 
           // Adicionar à rota apenas se mudou significativamente (mais de 2 metros)
           setRota(prev => {
@@ -429,11 +406,7 @@ const MapaRastreamento: React.FC = () => {
               // Usar Background Sync se disponível
               const result = await saveLocationForSync(localizacao);
               
-              if (result.synced) {
-                console.log('✅ Localização enviada via Background Sync');
-              } else {
-                console.log('📦 Localização salva para sincronização posterior');
-              }
+              // Enviar via Socket.io também
 
               // Enviar via Socket.io também
               socketRef.current.emit('identificacao', {
@@ -470,10 +443,8 @@ const MapaRastreamento: React.FC = () => {
           
           // Tentar obter localização com configurações menos restritivas
           if (error.code === error.TIMEOUT) {
-            console.log('⏰ Timeout - Tentando com configurações alternativas...');
             navigator.geolocation.getCurrentPosition(
               (position) => {
-                console.log('✅ Localização obtida com configurações alternativas');
                 setPosicaoAtual([position.coords.latitude, position.coords.longitude]);
                 setAccuracy(position.coords.accuracy);
               },
@@ -544,14 +515,6 @@ const MapaRastreamento: React.FC = () => {
     tempoParadoSegundos: Math.floor((Date.now() - ultimoMovimento) / 1000),
   });
 
-  // Debug: Log da lista final do drawer
-  console.log('📋 Lista final do drawer:', usuariosDrawer);
-  console.log('👑 É admin?', isAdmin);
-  console.log('👥 Total no drawer:', usuariosDrawer.length);
-  console.log('👤 Meu ID:', socketRef.current?.id || 'Não disponível');
-  console.log('🌐 Ambiente:', process.env.NODE_ENV);
-  console.log('🔗 Socket URL:', process.env.REACT_APP_SOCKET_URL || 'http://localhost:4000');
-
   function handleRemoverUsuario(userId: string) {
     // Implemente a lógica para remover um usuário do drawer
   }
@@ -602,8 +565,6 @@ const MapaRastreamento: React.FC = () => {
           boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
         }}
         onClick={() => {
-          console.log('🔘 Clicou no botão do drawer');
-          console.log('📋 Estado atual:', { drawerAberto, isAdmin, usuariosDrawer: usuariosDrawer.length });
           setDrawerAberto(true);
         }}
         title="Usuários online"

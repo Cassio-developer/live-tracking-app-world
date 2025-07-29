@@ -22,14 +22,6 @@ interface DrawerUsuariosProps {
 
 const DrawerUsuarios: React.FC<DrawerUsuariosProps> = ({ usuarios, aberto, onClose, isAdmin, onRemoverUsuario, meuId }) => {
 
-  console.log('📋 DrawerUsuarios - Props recebidas:', {
-    usuarios: usuarios.length,
-    aberto,
-    isAdmin,
-    meuId
-  });
-  console.log('👥 Lista de usuários no drawer:', usuarios);
-
   return (
     <div className={`drawer-usuarios-overlay${aberto ? ' aberto' : ''}`}>
       <div className="drawer-usuarios">

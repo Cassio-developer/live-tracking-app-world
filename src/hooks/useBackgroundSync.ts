@@ -63,7 +63,6 @@ export const useBackgroundSync = () => {
       await (registration as any).sync.register('location-sync');
       
       setStatus(prev => ({ ...prev, isRegistered: true }));
-      console.log('✅ Background Sync registrado');
       
       return true;
     } catch (error) {
@@ -87,7 +86,6 @@ export const useBackgroundSync = () => {
         });
 
         if (response.ok) {
-          console.log('✅ Localização enviada via método tradicional');
           return { success: true, synced: true };
         } else {
           console.warn('⚠️ Falha no envio via método tradicional');
@@ -111,7 +109,6 @@ export const useBackgroundSync = () => {
       });
 
       if (response.ok) {
-        console.log('✅ Localização enviada com sucesso');
         return { success: true, synced: true };
       } else {
         // Se falhar, salvar para sincronização posterior
@@ -123,7 +120,6 @@ export const useBackgroundSync = () => {
           pendingSyncs: prev.pendingSyncs + 1 
         }));
         
-        console.log('📦 Localização salva para sincronização posterior');
         return { success: true, synced: false };
       }
     } catch (error) {
@@ -176,7 +172,6 @@ export const useBackgroundSync = () => {
   const forceSync = useCallback(async () => {
     try {
       await registerBackgroundSync();
-      console.log('🔄 Sincronização forçada iniciada');
     } catch (error) {
       console.error('❌ Erro ao forçar sincronização:', error);
     }
@@ -193,7 +188,6 @@ export const useBackgroundSync = () => {
       }
       
       setStatus(prev => ({ ...prev, pendingSyncs: 0 }));
-      console.log('🗑️ Cache de localizações limpo');
     } catch (error) {
       console.error('❌ Erro ao limpar cache:', error);
     }

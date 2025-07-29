@@ -130,13 +130,10 @@ const FaceRegistration: React.FC<FaceRegistrationProps> = ({
     
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
-    
-    console.log('📐 Canvas configurado:', { width: canvas.width, height: canvas.height });
 
     const detectLoop = async () => {
       // Verificar se os elementos ainda existem
       if (!videoRef.current || !canvasRef.current) {
-        console.log('❌ Elementos de vídeo ou canvas não encontrados no loop');
         setIsDetecting(false);
         return;
       }
