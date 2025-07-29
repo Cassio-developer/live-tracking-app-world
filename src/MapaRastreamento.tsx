@@ -849,65 +849,70 @@ const MapaRastreamento: React.FC = () => {
         )}
         {/* Marcadores de outros usuários */}
         {isAdmin ? (
-          // Para admin: mostrar todos os usuários conectados COM localização
-          usuariosConectados
-            .filter(usuario => {
-              // Filtrar apenas usuários com localização válida
+          // Para admin: mostrar TODOS os usuários conectados
+          (() => {
+            const usuariosParaRenderizar = usuariosConectados.filter(usuario => usuario.socketId !== socketRef.current?.id);
+            
+            return usuariosParaRenderizar.map((usuario, index) => {
               const hasLocation = usuario.latitude && usuario.longitude;
               const isOnline = usuario.lastLocationUpdate && (Date.now() - usuario.lastLocationUpdate < 30000); // 30s
-              return hasLocation && isOnline && usuario.socketId !== socketRef.current?.id;
-            })
-            .map((usuario) => {
+              
+              // Verificar se o usuário tem dados válidos
+              if (!usuario.nome || !usuario.socketId) {
+                return null;
+              }
+              
               return (
-                <Marker
-                  key={usuario.socketId}
-                  position={[usuario.latitude, usuario.longitude]}
-                  icon={criarIconeAvatar(usuario.avatar)}
-                >
-                  <Popup>
-                    <div style={{ textAlign: 'center', minWidth: '150px' }}>
-                      <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
-                        {usuario.nome}
+                <div key={usuario.socketId}>
+                  {/* Marcador do usuário - mostrar sempre */}
+                  <Marker
+                    position={hasLocation ? [usuario.latitude, usuario.longitude] : [-23.55052, -46.633308]}
+                    icon={criarIconeAvatar(usuario.avatar)}
+                    opacity={hasLocation && isOnline ? 1 : 0.5}
+                  >
+                    <Popup>
+                      <div style={{ textAlign: 'center', minWidth: '150px' }}>
+                        <div style={{ fontWeight: 'bold', marginBottom: 4 }}>
+                          {usuario.nome} (ID: {usuario.socketId?.slice(0, 8)}...)
+                        </div>
+                        <div style={{ fontSize: 12, color: '#666' }}>
+                          {usuario.isAdmin ? '👑 Admin' : '👤 Usuário'}
+                        </div>
+                        <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+                          {hasLocation ? (isOnline ? '📍 Online' : '⚠️ Offline') : '❓ Sem localização'}
+                          {usuario.accuracy && (
+                            <div>Precisão: ±{Math.round(usuario.accuracy)}m</div>
+                          )}
+                          {usuario.lastLocationUpdate && (
+                            <div style={{ fontSize: 10, color: '#999', marginTop: 2 }}>
+                              Atualizado: {Math.floor((Date.now() - usuario.lastLocationUpdate) / 1000)}s atrás
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ fontSize: 10, color: '#999', marginTop: 4, borderTop: '1px solid #eee', paddingTop: 4 }}>
+                          Posição: {hasLocation ? 'Real' : 'Padrão (São Paulo)'}
+                        </div>
                       </div>
-                      <div style={{ fontSize: 12, color: '#666' }}>
-                        {usuario.isAdmin ? '👑 Admin' : '👤 Usuário'}
-                      </div>
-                      <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
-                        📍 Localização ativa
-                        {usuario.accuracy && (
-                          <div>Precisão: ±{Math.round(usuario.accuracy)}m</div>
-                        )}
-                        {usuario.lastLocationUpdate && (
-                          <div style={{ fontSize: 10, color: '#999', marginTop: 2 }}>
-                            Atualizado: {Math.floor((Date.now() - usuario.lastLocationUpdate) / 1000)}s atrás
-                          </div>
-                        )}
-                      </div>
-                      <div style={{ fontSize: 10, color: '#999', marginTop: 4, borderTop: '1px solid #eee', paddingTop: 4 }}>
-                        ID: {usuario.socketId?.slice(0, 8)}...
-                      </div>
-                      <button
-                        style={{
-                          background: '#dc3545',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '4px',
-                          padding: '4px 8px',
-                          fontSize: '10px',
-                          cursor: 'pointer',
-                          marginTop: '8px',
-                          width: '100%'
-                        }}
-                        onClick={() => handleRemoverUsuario(usuario.socketId)}
-                        title="Remover usuário"
-                      >
-                        🗑️ Remover
-                      </button>
-                    </div>
-                  </Popup>
-                </Marker>
+                    </Popup>
+                  </Marker>
+                  
+                  {/* Círculo de precisão (raio aproximado) - apenas se tiver localização */}
+                  {hasLocation && usuario.accuracy && (
+                    <Circle
+                      center={[usuario.latitude, usuario.longitude]}
+                      radius={usuario.accuracy}
+                      pathOptions={{ 
+                        color: isOnline ? '#28a745' : '#6c757d', 
+                        fillColor: isOnline ? '#28a745' : '#6c757d', 
+                        fillOpacity: 0.1,
+                        weight: 1
+                      }}
+                    />
+                  )}
+                </div>
               );
-            })
+            });
+          })()
         ) : (
           // Para usuários normais: mostrar apenas localizações recebidas via Socket
           Object.entries(localizacoes).map(([userId, localizacao]) => {
@@ -917,21 +922,36 @@ const MapaRastreamento: React.FC = () => {
               const emMovimento = Date.now() - localizacao.timestamp < 10000;
               const tempoParadoSegundos = Math.floor((Date.now() - localizacao.timestamp) / 1000);
               return (
-                <Marker
-                  key={userId}
-                  position={[localizacao.latitude, localizacao.longitude]}
-                  icon={criarIconeAvatar(localizacao.avatar)}
-                >
-                  <Popup>
-                    <StatusUsuario
-                      online={true}
-                      nome={localizacao.nome || `Usuário ${userId.slice(0, 8)}`}
-                      timestamp={localizacao.timestamp}
-                      emMovimento={emMovimento}
-                      tempoParadoSegundos={tempoParadoSegundos}
+                <div key={userId}>
+                  <Marker
+                    position={[localizacao.latitude, localizacao.longitude]}
+                    icon={criarIconeAvatar(localizacao.avatar)}
+                  >
+                    <Popup>
+                      <StatusUsuario
+                        online={true}
+                        nome={localizacao.nome || `Usuário ${userId.slice(0, 8)}`}
+                        timestamp={localizacao.timestamp}
+                        emMovimento={emMovimento}
+                        tempoParadoSegundos={tempoParadoSegundos}
+                      />
+                    </Popup>
+                  </Marker>
+                  
+                  {/* Círculo de precisão para usuários normais também */}
+                  {localizacao.accuracy && (
+                    <Circle
+                      center={[localizacao.latitude, localizacao.longitude]}
+                      radius={localizacao.accuracy}
+                      pathOptions={{ 
+                        color: '#007bff', 
+                        fillColor: '#007bff', 
+                        fillOpacity: 0.1,
+                        weight: 1
+                      }}
                     />
-                  </Popup>
-                </Marker>
+                  )}
+                </div>
               );
             }
             return null;

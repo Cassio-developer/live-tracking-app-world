@@ -33,30 +33,16 @@ const HistoryPage: React.FC = () => {
     setError('');
     try {
       const data = await authService.getLocationHistory(from, to);
-      
-      if (data && data.length > 0) {
-  
-        // Verificar se há campos com nomes diferentes
-        const firstItem = data[0];
-        if (firstItem.lat !== undefined) {
-        }
-        if (firstItem.lng !== undefined) {
-        }
-      }
-      
-      // Temporariamente sem filtragem para debug
-      const normalizedData = (data || []).map((item: any) => ({
-        ...item,
-        latitude: item.latitude || item.lat,
-        longitude: item.longitude || item.lng,
-        timestamp: item.timestamp || item.createdAt || new Date().toISOString()
-      }));
-      
-      setHistory(normalizedData);
-      
-      console.log('📊 Itens definidos no estado:', normalizedData.length);
+      // Filtrar apenas localizações com latitude e longitude válidas
+      const validLocations = data.filter((location: any) => 
+        location && 
+        typeof location.latitude === 'number' && 
+        typeof location.longitude === 'number' &&
+        !isNaN(location.latitude) && 
+        !isNaN(location.longitude)
+      );
+      setHistory(validLocations);
     } catch (err: any) {
-      console.error('❌ Erro ao buscar histórico:', err);
       setError('Erro ao buscar histórico');
     } finally {
       setLoading(false);
